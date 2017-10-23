@@ -24,7 +24,7 @@
 
 bool isClosed = false;
 Display display(WIDTH, HEIGHT, "Hello Screen");
-Camera camera(glm::vec3(0.0f, 0, -3.0f), 80.0f, (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
+Camera camera(glm::vec3(0.0f, 10.0, 2.0f), 80.0f, (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
 Blocks blocks(&display, 2);
 
 Shader shader("./res/basicShader");
@@ -53,6 +53,7 @@ int main(int argc, char** argv)
 	float counter = 0.0f;
 	float xMouse = 0, yMouse = 0;
 
+	chunkManager.LoadWorld();
 	display.InitializeBuffer();
 
 	while (!isClosed)
@@ -80,7 +81,7 @@ int main(int argc, char** argv)
 		short vertical = (keys[SDL_SCANCODE_W] ? 1 : 0) + (keys[SDL_SCANCODE_S] ? -1 : 0);
 		short horizontal = (keys[SDL_SCANCODE_A] ? 1 : 0) + (keys[SDL_SCANCODE_D] ? -1 : 0);
 
-		camera.position += camera.forward * 0.1f * (float)vertical + glm::cross(camera.forward, camera.up) * 0.1f * (float)horizontal;
+		camera.position += camera.forward * 0.3f * (float)vertical + glm::cross(camera.forward, camera.up) * 0.3f * (float)horizontal;
 
 		camera.RotateBy(xMouse/100.0f, yMouse/100.0f);
 
@@ -106,7 +107,7 @@ int main(int argc, char** argv)
 		
 		shader.Update(transform, camera);
 
-		chunkManager.Draw();
+		chunkManager.Draw(camera.position.x, camera.position.z);
 		
 		display.DrawBuffer();
 
@@ -129,10 +130,10 @@ void ReadConsoleCommand()
 		//std::cout << command << std::endl;
 		//std::cout << sValue << std::endl;
 
-		if(command == "loadChunk")
-		chunkManager.LoadChunkFromFile(sValue);
-		else if(command == "saveChunk")
-		chunkManager.SaveChunkToFile(sValue);
+		if(command == "loadWorld")
+		chunkManager.LoadWorld();
+		//else if(command == "saveChunk")
+		//chunkManager.SaveChunkToFile(0, 0);
 		else
 		{
 			std::cout << "Command Not Recognised" << std::endl;

@@ -12,7 +12,7 @@ class Chunk
 {
 public:
 	int chunkSize = 8;
-	Chunk(char* ids, Shader* shader, Transform* transform, Blocks* blocks, Display* display);
+	Chunk(char* ids, glm::vec3 chunkRoot, Shader* shader, Transform* transform, Blocks* blocks, Display* display);
 	virtual ~Chunk();
 
 	void DrawChunk();
@@ -20,9 +20,9 @@ public:
 	
 	char* blockIDs;
 
+	glm::vec3 m_chunkRoot = glm::vec3(0, 0, 0);
 private:
 	char* m_visiblilityArray;	//UP FRONT DOWN RIGHT BACK LEFT NULL NULL
-	glm::vec3 m_chunkRoot = glm::vec3(0, 0, 0);
 	Shader* m_shader;
 	Transform* m_transform;
 	Blocks* m_blocks;
