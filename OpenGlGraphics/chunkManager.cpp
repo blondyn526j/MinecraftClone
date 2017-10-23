@@ -46,7 +46,7 @@ void ChunkManager::Draw(float x, float z)
 	for(int a = xPos-DRAW_DISTANCE; a <= xPos+DRAW_DISTANCE; a++)
 		for (int b = zPos-DRAW_DISTANCE; b <= zPos+DRAW_DISTANCE; b++)
 		{
-			///TO BE CORRECTED - NEEDLESS EVERY FRAME
+			if(m_chunks[m_mod(a, 5) + m_mod(b, 5) * 5]->m_chunkRoot != glm::vec3(8 * a, 0, 8 * b))
 			LoadChunkFromFile(a, b);
 
 			m_chunks[m_mod(a, 5) + m_mod(b, 5) * 5]->UpdateVisibility();
@@ -67,11 +67,6 @@ void ChunkManager::LoadWorld()
 
 void ChunkManager::LoadChunkFromFile(int x, int z)
 {
-	if (m_chunks[m_mod(x, 5) + m_mod(z, 5) * 5] == nullptr)
-	{
-		SaveChunkToFile(x, z, GenerateChunk(x, z));
-	}
-
 	std::ifstream file;
 
 
@@ -131,19 +126,19 @@ void ChunkManager::SaveChunkToFile(int x, int z, Chunk* chunk)
 		file << chunk->blockIDs[i];
 
 	file.close();
-	std::cout << "Chunk Saved Succesfully" << std::endl;
+	std::cout << "Chunk Saved " << x << 'x' << z << std::endl;
 }
 
 Chunk* ChunkManager::GenerateChunk(int x, int z)
 {
 	char* ids = new char[512];
 	for (int i = 0; i < 512; i++)
-		ids[i] = 1;
+		ids[i] = 2;
 
-	ids[0] = 0;
-	ids[1] = 1;
-	ids[9] = 1;
-	ids[64] = 0;
+	ids[510] = 1;
+	ids[512] = 0;
+	ids[506] = 0;
+	ids[500] = 0;
 
 	return new Chunk(ids, glm::vec3(8 * x, 0, 8 * z), m_shader, m_transform, m_blocks, m_display);
 }

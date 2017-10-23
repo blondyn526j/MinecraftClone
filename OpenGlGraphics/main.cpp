@@ -24,8 +24,9 @@
 
 bool isClosed = false;
 Display display(WIDTH, HEIGHT, "Hello Screen");
-Camera camera(glm::vec3(0.0f, 10.0, 2.0f), 80.0f, (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
+Camera camera(glm::vec3(4.0f, 10.0, 4.0f), 80.0f, (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
 Blocks blocks(&display, 2);
+Input input(&isClosed);
 
 Shader shader("./res/basicShader");
 Texture texture("./res/bricks.jpg");
@@ -39,19 +40,8 @@ int main(int argc, char** argv)
 
 	std::thread consoleReadThread(ReadConsoleCommand);
 
-	char* ids = new char[512];
-	for (int i = 0; i < 512; i++)
-		ids[i] = 2;
-
-	ids[0] = 1;
-	ids[1] = 0;
-	ids[9] = 0;
-	ids[64] = 0;
-
-	//Chunk chunk0(ids, &shader, &transform, &blocks, &display);
-
 	float counter = 0.0f;
-	float xMouse = 0, yMouse = 0;
+
 
 	chunkManager.LoadWorld();
 	display.InitializeBuffer();
@@ -59,31 +49,11 @@ int main(int argc, char** argv)
 	while (!isClosed)
 	{
 		//INPUT TEST
+		input.Update();
 
-		SDL_Event e;
+		camera.position += camera.forward * 0.3f * (float)input.vertical + glm::cross(camera.forward, camera.up) * 0.3f * (float)input.horizontal;
 
-		while (SDL_PollEvent(&e))
-		{
-			if (e.type == SDL_QUIT)
-				isClosed = true;
-			if (e.type == SDL_MOUSEMOTION)
-			{
-				xMouse = e.motion.xrel;
-				yMouse = e.motion.yrel;
-			}
-			if (e.type == SDL_KEYDOWN)
-			{
-				//std::cout << "KEY DOWN" << std::endl;
-			}
-		}
-
-		const Uint8* keys = SDL_GetKeyboardState(NULL);
-		short vertical = (keys[SDL_SCANCODE_W] ? 1 : 0) + (keys[SDL_SCANCODE_S] ? -1 : 0);
-		short horizontal = (keys[SDL_SCANCODE_A] ? 1 : 0) + (keys[SDL_SCANCODE_D] ? -1 : 0);
-
-		camera.position += camera.forward * 0.3f * (float)vertical + glm::cross(camera.forward, camera.up) * 0.3f * (float)horizontal;
-
-		camera.RotateBy(xMouse/100.0f, yMouse/100.0f);
+		camera.RotateBy(input.xMouse/100.0f, input.yMouse/100.0f);
 
 		//INPUT TEST END
 
@@ -101,9 +71,6 @@ int main(int argc, char** argv)
 		display.Clear(0.6f, 0.15f, 0.2f, 1.0f);
 		shader.Bind();
 		texture.Bind(0);
-
-		xMouse = 0;
-		yMouse = 0;
 		
 		shader.Update(transform, camera);
 

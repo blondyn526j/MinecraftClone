@@ -175,6 +175,8 @@
     <ClInclude Include="transform.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Debug\glew32.dll" />
+    <None Include="..\Debug\SDL2.dll" />
     <None Include="res\basicShader.fs" />
     <None Include="res\basicShader.vs" />
   </ItemGroup>

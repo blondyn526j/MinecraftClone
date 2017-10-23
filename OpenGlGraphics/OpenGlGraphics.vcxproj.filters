@@ -94,5 +94,7 @@
     <None Include="res\basicShader.vs">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\Debug\glew32.dll" />
+    <None Include="..\Debug\SDL2.dll" />
   </ItemGroup>
 </Project>
