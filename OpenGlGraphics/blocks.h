@@ -6,11 +6,11 @@
 class Blocks
 {
 public:
-	Blocks(int numBlocks);
+	Blocks(Display* display, int numBlocks);
 	virtual ~Blocks();
 	Mesh* operator[](int ID)
 	{
-		return m_meshes[ID];
+		return m_meshes[ID-1];
 	}
 
 

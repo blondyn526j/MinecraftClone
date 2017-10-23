@@ -1,7 +1,3 @@
 #pragma once
 
-
-
-
-void ManageInput()
-{}
+void ReadConsoleCommand();

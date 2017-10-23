@@ -1,5 +1,4 @@
 #include "main.h"
-#include <iostream>
 #include "display.h"
 #include "mesh.h"
 #include "shader.h"
@@ -8,9 +7,13 @@
 #include "camera.h"
 #include "input.h"
 #include "blocks.h"
-#include <vector>
+#include "chunk.h"
+#include "chunkManager.h"
 
-//#include <GL/GLU.h>
+#include <vector>
+#include <iostream>
+#include <thread>
+
 #include <GL/glut.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -19,22 +22,38 @@
 #define WIDTH 800
 #define HEIGHT 600
 
+bool isClosed = false;
+Display display(WIDTH, HEIGHT, "Hello Screen");
+Camera camera(glm::vec3(0.0f, 0, -3.0f), 80.0f, (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
+Blocks blocks(&display, 2);
+
+Shader shader("./res/basicShader");
+Texture texture("./res/bricks.jpg");
+Transform transform;
+
+ChunkManager chunkManager(&shader, &transform, &blocks, &display);
+
 int main(int argc, char** argv)
 {
 	std::cout << "Initializing Components" << std::endl;
 
-	bool isClosed = false;
-	Input input;
-	Display display(WIDTH, HEIGHT, "Hello Screen");
-	Camera camera(glm::vec3(0.0f, 0, -3.0f), 80.0f, (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
-	Blocks blocks(2);
+	std::thread consoleReadThread(ReadConsoleCommand);
 
-	Shader shader("./res/basicShader");
-	Texture texture("./res/bricks.jpg");
-	Transform transform;
+	char* ids = new char[512];
+	for (int i = 0; i < 512; i++)
+		ids[i] = 2;
+
+	ids[0] = 1;
+	ids[1] = 0;
+	ids[9] = 0;
+	ids[64] = 0;
+
+	//Chunk chunk0(ids, &shader, &transform, &blocks, &display);
 
 	float counter = 0.0f;
 	float xMouse = 0, yMouse = 0;
+
+	display.InitializeBuffer();
 
 	while (!isClosed)
 	{
@@ -85,17 +104,39 @@ int main(int argc, char** argv)
 		xMouse = 0;
 		yMouse = 0;
 		
-
 		shader.Update(transform, camera);
-		transform.pos = glm::vec3(0, 0, 0);
-		blocks[0]->Draw();
 
-		shader.Update(transform, camera);
-		transform.pos += glm::vec3(2, 0, 0);
-		blocks[1]->Draw();
+		chunkManager.Draw();
+		
+		display.DrawBuffer();
 
 		display.Update();
 		counter += 0.05f;
 	}
 	return 0;
+}
+
+void ReadConsoleCommand()
+{
+	std::string input;
+
+	while (!isClosed)
+	{
+		std::cin >> input;
+		std::string command = input.substr(0, input.find('/'));
+		std::string sValue = input.substr(input.find('/') + 1);
+
+		//std::cout << command << std::endl;
+		//std::cout << sValue << std::endl;
+
+		if(command == "loadChunk")
+		chunkManager.LoadChunkFromFile(sValue);
+		else if(command == "saveChunk")
+		chunkManager.SaveChunkToFile(sValue);
+		else
+		{
+			std::cout << "Command Not Recognised" << std::endl;
+		}
+	}
+
 }

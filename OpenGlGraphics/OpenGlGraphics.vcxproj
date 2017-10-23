@@ -150,9 +150,11 @@
   <ItemGroup>
     <ClCompile Include="blocks.cpp" />
     <ClCompile Include="chunk.cpp" />
+    <ClCompile Include="chunkManager.cpp" />
     <ClCompile Include="display.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesh.cpp" />
+    <ClCompile Include="optMesh.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="stb_image.c" />
     <ClCompile Include="texture.cpp" />
@@ -161,9 +163,12 @@
     <ClInclude Include="blocks.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="chunk.h" />
+    <ClInclude Include="chunkManager.h" />
     <ClInclude Include="display.h" />
     <ClInclude Include="input.h" />
+    <ClInclude Include="main.h" />
     <ClInclude Include="mesh.h" />
+    <ClInclude Include="optMesh.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="texture.h" />

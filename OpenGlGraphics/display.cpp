@@ -4,6 +4,8 @@
 #include <iostream>
 #include "input.h"
 
+#define bufferSize 40960
+
 Display::Display(int width, int height, const std::string& title)
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -36,8 +38,8 @@ Display::Display(int width, int height, const std::string& title)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
-	//glEnable(GL_DEPTH_TEST);
-	//gl_DepthF(GL_LESS);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 }
@@ -57,10 +59,80 @@ void Display::Update()
 void Display::Clear(float red, float green, float blue, float alpha)
 {
 	glClearColor(red, green, blue, alpha);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	m_bufferedVertices = 0;
+	positions.clear();
+	texCoords.clear();
 }
 
 bool Display::IsClosed()
 {
 	return m_isClosed;
+}
+
+void Display::InitializeBuffer()
+{
+	positions.reserve(bufferSize);
+	texCoords.reserve(bufferSize);
+
+	//m_drawCount = numVertices;
+	glGenVertexArrays(1, &m_vertexArrayObject);
+	glBindVertexArray(m_vertexArrayObject);
+
+	//std::vector<glm::vec3> positions;
+	//std::vector<glm::vec2> texCoords;
+
+	//positions.reserve(numVertices);
+	//texCoords.reserve(numVertices);
+
+	glGenBuffers(NUM_BUFFERS, m_vertexArrayBuffers);
+	glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[POSITION_VB]);
+	glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(glm::vec3), NULL, GL_DYNAMIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	//glBindVertexArray(0);
+
+	//glGenBuffers(NUM_BUFFERS, m_vertexArrayBuffers);
+	glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[TEXCOORD_VB]);
+	glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(glm::vec2), NULL, GL_DYNAMIC_DRAW);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexArrayBuffers[INDEX_VB]);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndecies * sizeof(m_indecies[0]), &m_indecies[0], GL_STATIC_DRAW);
+
+	glBindVertexArray(0);
+}
+
+void Display::AppendToDrawBuffer(Vertex* vertices, int numVertices, glm::vec3* offset)
+{
+	for (int i = 0; i < numVertices; i++)
+	{
+		positions.push_back(vertices[i].pos + *offset);
+		texCoords.push_back(vertices[i].texCoord);
+	}
+	m_bufferedVertices += numVertices;
+}
+
+void Display::DrawBuffer()
+{
+	//std::cout << m_bufferedVertices << std::endl;
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[POSITION_VB]);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * m_bufferedVertices, &(positions[0]));
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[TEXCOORD_VB]);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec2) * m_bufferedVertices, &(texCoords[0]));
+
+	//glBindBuffer(0);
+
+	glBindVertexArray(m_vertexArrayObject);
+
+	glDrawArrays(GL_TRIANGLES, 0, m_bufferedVertices);
+
+	glBindVertexArray(0);
 }

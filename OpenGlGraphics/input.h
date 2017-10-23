@@ -2,12 +2,15 @@
 
 #include <iostream>
 
-static class Input
+class Input
 {
 public:
-	static void ManageInput()
+	void Update()
 	{
 
 	}
+	float horizontal = 0;
+	float vertical = 0;
+	
 };
 

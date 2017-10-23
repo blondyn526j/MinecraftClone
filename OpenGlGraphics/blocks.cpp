@@ -1,7 +1,7 @@
 #include "blocks.h"
 #include <iostream>
 
-Blocks::Blocks(int numBlocks)
+Blocks::Blocks(Display* display, int numBlocks)
 {
 	m_meshes.reserve(numBlocks);
 	for (int i = 0; i < numBlocks; i++)
@@ -14,35 +14,58 @@ Blocks::Blocks(int numBlocks)
 			Vertex(glm::vec3(0, 1, 1), glm::vec2(b,0)),//0
 			Vertex(glm::vec3(1, 1, 1), glm::vec2(a,0)),//1
 			Vertex(glm::vec3(1, 1, 0), glm::vec2(a,0.33f)),//2
+
+			Vertex(glm::vec3(0, 1, 1), glm::vec2(b,0)),//0
+			Vertex(glm::vec3(1, 1, 0), glm::vec2(a,0.33f)),//2
 			Vertex(glm::vec3(0, 1, 0), glm::vec2(b,0.33f)),//3
 			//FRONT
-			//3
-			//2
+			
+			Vertex(glm::vec3(1, 1, 0), glm::vec2(a,0.33f)),//2
+			Vertex(glm::vec3(0, 0, 0), glm::vec2(b,0.66f)),//4
+			Vertex(glm::vec3(0, 1, 0), glm::vec2(b,0.33f)),//3
+
+			Vertex(glm::vec3(1, 1, 0), glm::vec2(a,0.33f)),//2
+			Vertex(glm::vec3(1, 0, 0), glm::vec2(a,0.66f)),//5
+			Vertex(glm::vec3(0, 0, 0), glm::vec2(b,0.66f)),//4
+
+			//DOWN
 			Vertex(glm::vec3(0, 0, 0), glm::vec2(b,0.66f)),//4
 			Vertex(glm::vec3(1, 0, 0), glm::vec2(a,0.66f)),//5
-			//DOWN
-			//4
-			//5
-			Vertex(glm::vec3(0, 0, 1), glm::vec2(b,1)),//6
 			Vertex(glm::vec3(1, 0, 1), glm::vec2(a,1)),//7
+
+			Vertex(glm::vec3(0, 0, 0), glm::vec2(b,0.66f)),//4
+			Vertex(glm::vec3(1, 0, 1), glm::vec2(a,1)),//7
+			Vertex(glm::vec3(0, 0, 1), glm::vec2(b,1)),//6
+
 			//RIGHT
 			Vertex(glm::vec3(1, 1, 0), glm::vec2(b, 0.33f)),//8
 			Vertex(glm::vec3(1, 1, 1), glm::vec2(a, 0.33f)),//9
 			Vertex(glm::vec3(1, 0, 1), glm::vec2(a, 0.66f)),//10
+
+			Vertex(glm::vec3(1, 1, 0), glm::vec2(b, 0.33f)),//8
+			Vertex(glm::vec3(1, 0, 1), glm::vec2(a, 0.66f)),//10
 			Vertex(glm::vec3(1, 0, 0), glm::vec2(b, 0.66f)),//11
 			//BACK
 			Vertex(glm::vec3(0, 1, 1), glm::vec2(a, 0.33f)),//12
-			Vertex(glm::vec3(1, 1, 1), glm::vec2(b, 0.33f)),//13
 			Vertex(glm::vec3(1, 0, 1), glm::vec2(b, 0.66f)),//14
+			Vertex(glm::vec3(1, 1, 1), glm::vec2(b, 0.33f)),//13
+
+			Vertex(glm::vec3(0, 1, 1), glm::vec2(a, 0.33f)),//12
 			Vertex(glm::vec3(0, 0, 1), glm::vec2(a, 0.66f)),//15
+			Vertex(glm::vec3(1, 0, 1), glm::vec2(b, 0.66f)),//14
+
 			//LEFT
 			Vertex(glm::vec3(0, 1, 0), glm::vec2(a, 0.33f)),//16
-			Vertex(glm::vec3(0, 1, 1), glm::vec2(b, 0.33f)),//17
 			Vertex(glm::vec3(0, 0, 1), glm::vec2(b, 0.66f)),//18
-			Vertex(glm::vec3(0, 0, 0), glm::vec2(a, 0.66f)) };//19
+			Vertex(glm::vec3(0, 1, 1), glm::vec2(b, 0.33f)),//17
+
+			Vertex(glm::vec3(0, 1, 0), glm::vec2(a, 0.33f)),//16
+			Vertex(glm::vec3(0, 0, 0), glm::vec2(a, 0.66f)), //19
+			Vertex(glm::vec3(0, 0, 1), glm::vec2(b, 0.66f)) };//18
 
 
-		unsigned int indecies[] = {
+
+		/*unsigned int indecies[] = {
 			//UP
 			0,1,2,
 			0,2,3,
@@ -61,8 +84,8 @@ Blocks::Blocks(int numBlocks)
 			//LEFT
 			16,18,17,
 			16,19,18
-		};
-		m_meshes.push_back(new Mesh(cubeVertices, indecies, 20, 36));
+		};*/
+		m_meshes.push_back(new Mesh(display, cubeVertices, 36));
 	}
 }
 

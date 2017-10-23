@@ -2,27 +2,14 @@
 #include <glm/glm.hpp> 
 #include <GL/glew.h>
 #include <vector>
-
-class Vertex
-{
-public:
-	Vertex(const glm::vec3 &pos, const glm::vec2 &texCoord)
-	{
-		this->pos = pos;
-		this->texCoord = texCoord;
-	} 
-
-
-	glm::vec3 pos;
-	glm::vec2 texCoord;
-protected:
-private:
-};
+#include <iostream>
+#include "Vertex.h"
+#include "display.h"
 
 class Mesh
 {
 public:
-	Mesh(Vertex* vertices, unsigned int* indecies, unsigned int numVertices, unsigned int numIndecies);
+	Mesh(Display* display, Vertex* vertices, unsigned int numVertices);
 	Mesh() {}
 	//Mesh(Vertex* vertices, unsigned int* indecies);
 	virtual ~Mesh();
@@ -56,6 +43,8 @@ public:
 		return t;
 	}
 
+	std::vector<Vertex> vertices;
+
 protected:
 private:
 
@@ -69,11 +58,11 @@ private:
 		NUM_BUFFERS
 	};
 
-	std::vector<Vertex> m_vertices;
 	std::vector<unsigned int> m_indecies;
 	GLuint m_vertexArrayObject;
 	GLuint m_vertexArrayBuffers[NUM_BUFFERS];
 	unsigned int m_drawCount;
 	bool m_initialized = false;
+	Display* m_display;
 };
 

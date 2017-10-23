@@ -2,19 +2,21 @@
 #include <vector>
 
 
-Mesh::Mesh(Vertex* vertices, unsigned int* indecies, unsigned int numVertices, unsigned int numIndecies)
+Mesh::Mesh(Display* display, Vertex* vertices, unsigned int numVertices)
 {
-	m_vertices.reserve(numVertices);
-	for (int i = 0; i < numVertices; i++)
-		m_vertices.push_back(vertices[i]);
+	m_display = display;
 
-	m_indecies.reserve(numIndecies);
-	for (int i = 0; i < numIndecies; i++)
-		m_indecies.push_back(indecies[i]);
+	this->vertices.reserve(numVertices);
+	for (int i = 0; i < numVertices; i++)
+		this->vertices.push_back(vertices[i]);
+
+	//m_indecies.reserve(numIndecies);
+	//for (int i = 0; i < numIndecies; i++)
+	//	m_indecies.push_back(indecies[i]);
 
 
 	m_initialized = true;
-	m_drawCount = numIndecies;
+	m_drawCount = numVertices;
 	glGenVertexArrays(1, &m_vertexArrayObject);
 	glBindVertexArray(m_vertexArrayObject);
 
@@ -39,31 +41,33 @@ Mesh::Mesh(Vertex* vertices, unsigned int* indecies, unsigned int numVertices, u
 
 	//glBindVertexArray(0);
 
-	glGenBuffers(NUM_BUFFERS, m_vertexArrayBuffers);
+	//glGenBuffers(NUM_BUFFERS, m_vertexArrayBuffers);
 	glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[TEXCOORD_VB]);
 	glBufferData(GL_ARRAY_BUFFER, numVertices * sizeof(texCoords[0]), &texCoords[0], GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexArrayBuffers[INDEX_VB]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndecies * sizeof(m_indecies[0]), &m_indecies[0], GL_STATIC_DRAW);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vertexArrayBuffers[INDEX_VB]);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndecies * sizeof(m_indecies[0]), &m_indecies[0], GL_STATIC_DRAW);
 
 	glBindVertexArray(0);
 }
 
 Mesh::~Mesh()
 {
-	if(m_initialized)
-		glDeleteVertexArrays(1, &m_vertexArrayObject);
+	//if(m_initialized)
+	glDeleteVertexArrays(1, &m_vertexArrayObject);
 }
 
 void Mesh::Draw()
 {
-	glBindVertexArray(m_vertexArrayObject);
+	m_display->AppendToDrawBuffer(&(vertices[0]), 36, &glm::vec3(0,0,0));
 
-	glDrawElements(GL_TRIANGLES, m_drawCount, GL_UNSIGNED_INT, 0);
-	//glDrawArrays(GL_TRIANGLES, 0, m_drawCount);
+	//glBindVertexArray(m_vertexArrayObject);
 
-	glBindVertexArray(0);
+	///glDrawElements(GL_TRIANGLES, m_drawCount, GL_UNSIGNED_INT, 0);
+	//glDrawArrays(GL_TRIANGLES, 0, drawCount);
+
+	//glBindVertexArray(0);
 }
