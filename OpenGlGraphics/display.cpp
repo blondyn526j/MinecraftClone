@@ -61,14 +61,25 @@ void Display::Clear(float red, float green, float blue, float alpha)
 	glClearColor(red, green, blue, alpha);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	//m_bufferedVertices = 0;
+	//positions.clear();
+	//texCoords.clear();
+}
+
+void Display::ClearBuffer()
+{
 	m_bufferedVertices = 0;
 	positions.clear();
 	texCoords.clear();
 }
 
-void Display::ClearBuffer()
+void Display::ReassignBuffer()
 {
+	glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[POSITION_VB]);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * m_bufferedVertices, &(positions[0]));
 
+	glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[TEXCOORD_VB]);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec2) * m_bufferedVertices, &(texCoords[0]));
 }
 
 bool Display::IsClosed()
@@ -126,12 +137,6 @@ void Display::AppendToDrawBuffer(Vertex* vertices, int numVertices, glm::vec3* o
 void Display::DrawBuffer()
 {
 	//std::cout << m_bufferedVertices << std::endl;
-
-	glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[POSITION_VB]);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * m_bufferedVertices, &(positions[0]));
-
-	glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[TEXCOORD_VB]);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec2) * m_bufferedVertices, &(texCoords[0]));
 
 	//glBindBuffer(0);
 

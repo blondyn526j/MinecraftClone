@@ -32,5 +32,7 @@ private:
 	Blocks* m_blocks;
 	Display* m_display;
 	std::vector<Chunk*> m_chunks;
+	int m_old_xPos = -100;
+	int m_old_zPos = -100;
 };
 

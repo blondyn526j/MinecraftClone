@@ -16,6 +16,7 @@ public:
 	void AppendToDrawBuffer(Vertex* vertices, int numVertices, glm::vec3* offset);
 	void DrawBuffer();
 	void ClearBuffer();
+	void ReassignBuffer();
 
 	virtual ~Display();
 protected:

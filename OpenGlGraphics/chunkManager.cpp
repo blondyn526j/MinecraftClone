@@ -1,5 +1,5 @@
 #include "chunkManager.h"
-#define DRAW_DISTANCE 1
+#define DRAW_DISTANCE 3
 #define BUFFERWIDTH 10
 
 int m_mod(int b, int a)
@@ -17,17 +17,6 @@ ChunkManager::ChunkManager(Shader* shader, Transform* transform, Blocks* blocks,
 	m_chunks.reserve(BUFFERWIDTH * BUFFERWIDTH);
 	for (int i = 0; i < BUFFERWIDTH * BUFFERWIDTH; i++)
 		m_chunks.push_back(nullptr);
-
-	/*char* ids = new char[512];
-	for (int i = 0; i < 512; i++)
-		ids[i] = 2;
-
-	ids[0] = 0;
-	ids[1] = 1;
-	ids[9] = 1;
-	ids[64] = 0;*/
-
-	//m_chunk = new Chunk(ids, shader, transform, blocks, display);
 }
 
 ChunkManager::~ChunkManager()
@@ -36,23 +25,27 @@ ChunkManager::~ChunkManager()
 
 void ChunkManager::Draw(float x, float z)
 {
-	//m_chunks[0]->UpdateVisibility();
-
-	/*for (int i = 0; i < 25; i++)
-		if (m_chunks[i] != nullptr)
-			m_chunks[i]->UpdateVisibility();*/
 	int xPos = floorf(x / CHUNKWIDTH);
 	int zPos = floorf(z / CHUNKWIDTH);
 
-	for (int a = xPos - DRAW_DISTANCE; a <= xPos + DRAW_DISTANCE; a++)
-		for (int b = zPos - DRAW_DISTANCE; b <= zPos + DRAW_DISTANCE; b++)
-		{
-			if (m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->m_chunkRoot != glm::vec3(CHUNKWIDTH * a, 0, CHUNKWIDTH * b))
-				LoadChunkFromFile(a, b);
+	if (xPos != m_old_xPos || zPos != m_old_zPos)
+	{
+		m_display->ClearBuffer();
 
-			m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->UpdateVisibility();
-			//std::cout << m_chunks[m_mod(a, 5) + m_mod(b, 5) * 5]->m_chunkRoot.z << std::endl;
-		}
+		for (int a = xPos - DRAW_DISTANCE; a <= xPos + DRAW_DISTANCE; a++)
+			for (int b = zPos - DRAW_DISTANCE; b <= zPos + DRAW_DISTANCE; b++)
+			{
+				if (m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->m_chunkRoot != glm::vec3(CHUNKWIDTH * a, 0, CHUNKWIDTH * b))
+					LoadChunkFromFile(a, b);
+
+				m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->UpdateVisibility();
+				//std::cout << m_chunks[m_mod(a, 5) + m_mod(b, 5) * 5]->m_chunkRoot.z << std::endl;
+			}
+
+		m_display->ReassignBuffer();
+		m_old_xPos = xPos;
+		m_old_zPos = zPos;
+	}
 
 	//m_chunk->UpdateVisibility();
 }
@@ -62,15 +55,22 @@ void ChunkManager::UpdateVisiblity(float x, float z)
 	int xPos = floorf(x / CHUNKWIDTH);
 	int zPos = floorf(z / CHUNKWIDTH);
 
-	for (int a = xPos - DRAW_DISTANCE; a <= xPos + DRAW_DISTANCE; a++)
-		for (int b = zPos - DRAW_DISTANCE; b <= zPos + DRAW_DISTANCE; b++)
-		{
-			if (m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->m_chunkRoot != glm::vec3(CHUNKWIDTH * a, 0, CHUNKWIDTH * b))
-				LoadChunkFromFile(a, b);
+	if (xPos != m_old_xPos || zPos != m_old_zPos)
+	{
+		m_display->ClearBuffer();
 
-			m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->UpdateVisibility();
-			//std::cout << m_chunks[m_mod(a, 5) + m_mod(b, 5) * 5]->m_chunkRoot.z << std::endl;
-		}
+		for (int a = xPos - DRAW_DISTANCE; a <= xPos + DRAW_DISTANCE; a++)
+			for (int b = zPos - DRAW_DISTANCE; b <= zPos + DRAW_DISTANCE; b++)
+			{
+				if (m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->m_chunkRoot != glm::vec3(CHUNKWIDTH * a, 0, CHUNKWIDTH * b))
+					LoadChunkFromFile(a, b);
+
+				m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->UpdateVisibility();
+				//std::cout << m_chunks[m_mod(a, 5) + m_mod(b, 5) * 5]->m_chunkRoot.z << std::endl;
+			}
+
+	}
+
 }
 
 void ChunkManager::LoadWorld()
@@ -84,8 +84,19 @@ void ChunkManager::LoadWorld()
 
 void ChunkManager::LoadChunkFromFile(int x, int z)
 {
-	std::ifstream file;
+	std::string dir = "world/" + std::to_string(x) + 'x' + std::to_string(z);
+	FILE* pFile;
 
+	pFile = fopen(dir.c_str(), "r");
+
+	if (pFile == NULL)
+	{
+		SaveChunkToFile(x, z, GenerateChunk(x, z));
+		pFile = fopen(dir.c_str(), "r");
+	}
+
+
+	/*std::ifstream file;
 
 	file.open("world/" + std::to_string(x) + 'x' + std::to_string(z));
 
@@ -94,20 +105,23 @@ void ChunkManager::LoadChunkFromFile(int x, int z)
 		file.close();
 		SaveChunkToFile(x, z, GenerateChunk(x, z));
 		file.open("world/" + std::to_string(x) + 'x' + std::to_string(z));
-	}
+	}*/
 
 	char* ids = new char[CHUNKSIZE];
-	int i = 0;
+	/*int i = 0;
 	while (!file.eof())
 	{
 		file >> ids[i];
 		i++;
-	}
+	}*/
 
-	file.close();
+	std::fread(ids, sizeof(char), CHUNKSIZE, pFile);
+	//file.close();
 
 	delete(m_chunks[m_mod(x, BUFFERWIDTH) + BUFFERWIDTH * m_mod(z, BUFFERWIDTH)]);
 	m_chunks[m_mod(x, BUFFERWIDTH) + BUFFERWIDTH * m_mod(z, BUFFERWIDTH)] = new Chunk(ids, glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z), m_shader, m_transform, m_blocks, m_display);
+
+	fclose(pFile);
 
 	/*std::ifstream file;
 	file.open("world/" + fileName);
@@ -156,10 +170,10 @@ Chunk* ChunkManager::GenerateChunk(int x, int z)
 		{
 			for (int ax = 0; ax < CHUNKWIDTH; ax++)
 			{
-				if(ay < 100 * sin((float)az/180)+1)
-				ids[blocksDrawn] = 1;
+				if (ay < 100 * sin((float)az / 180) + 1)
+					ids[blocksDrawn] = 1;
 				else
-				ids[blocksDrawn] = 0;
+					ids[blocksDrawn] = 0;
 
 				blocksDrawn++;
 			}

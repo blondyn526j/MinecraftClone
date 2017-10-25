@@ -46,6 +46,8 @@ int main(int argc, char** argv)
 	chunkManager.LoadWorld();
 	display.InitializeBuffer();
 
+
+
 	while (!isClosed)
 	{
 		//INPUT TEST
@@ -74,8 +76,9 @@ int main(int argc, char** argv)
 		
 		shader.Update(transform, camera);
 
+		//display.ClearBuffer();
 		chunkManager.Draw(camera.position.x, camera.position.z);
-		
+		//display.ReassignBuffer();
 		display.DrawBuffer();
 
 		display.Update();

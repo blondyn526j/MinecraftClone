@@ -7,7 +7,7 @@
 #include "display.h"
 #include <bitset>
 
-#define CHUNKWIDTH 8
+#define CHUNKWIDTH 16
 #define CHUNKHEIGHT 128
 #define CHUNKSIZE CHUNKWIDTH*CHUNKWIDTH*CHUNKHEIGHT
 
