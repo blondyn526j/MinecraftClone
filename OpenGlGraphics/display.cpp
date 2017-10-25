@@ -4,7 +4,7 @@
 #include <iostream>
 #include "input.h"
 
-#define bufferSize 40960
+#define bufferSize 3276800
 
 Display::Display(int width, int height, const std::string& title)
 {
@@ -64,6 +64,11 @@ void Display::Clear(float red, float green, float blue, float alpha)
 	m_bufferedVertices = 0;
 	positions.clear();
 	texCoords.clear();
+}
+
+void Display::ClearBuffer()
+{
+
 }
 
 bool Display::IsClosed()

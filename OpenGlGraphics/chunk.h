@@ -7,7 +7,10 @@
 #include "display.h"
 #include <bitset>
 
-#define CHUNKSIZE 8
+#define CHUNKWIDTH 8
+#define CHUNKHEIGHT 128
+#define CHUNKSIZE CHUNKWIDTH*CHUNKWIDTH*CHUNKHEIGHT
+
 class Chunk
 {
 public:
@@ -22,7 +25,7 @@ public:
 
 	glm::vec3 m_chunkRoot = glm::vec3(0, 0, 0);
 private:
-	char* m_visiblilityArray;	//UP FRONT DOWN RIGHT BACK LEFT NULL NULL
+	//char* m_visiblilityArray;	//UP FRONT DOWN RIGHT BACK LEFT NULL NULL
 	Shader* m_shader;
 	Transform* m_transform;
 	Blocks* m_blocks;

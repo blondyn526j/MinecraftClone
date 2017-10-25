@@ -29,7 +29,7 @@ Blocks blocks(&display, 2);
 Input input(&isClosed);
 
 Shader shader("./res/basicShader");
-Texture texture("./res/bricks.jpg");
+Texture texture("./res/Texture.jpg");
 Transform transform;
 
 ChunkManager chunkManager(&shader, &transform, &blocks, &display);
