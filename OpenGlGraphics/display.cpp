@@ -4,7 +4,7 @@
 #include <iostream>
 #include "input.h"
 
-#define bufferSize 3276800
+#define bufferSize 8*3276800
 
 Display::Display(int width, int height, const std::string& title)
 {

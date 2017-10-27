@@ -25,7 +25,7 @@
 bool isClosed = false;
 Display display(WIDTH, HEIGHT, "Hello Screen");
 Camera camera(glm::vec3(4.0f, 100.0, 4.0f), 80.0f, (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
-Blocks blocks(&display, 2);
+Blocks blocks(&display, 1);
 Input input(&isClosed);
 
 Shader shader("./res/basicShader");

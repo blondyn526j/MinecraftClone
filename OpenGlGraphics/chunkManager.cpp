@@ -1,5 +1,5 @@
 #include "chunkManager.h"
-#define DRAW_DISTANCE 8
+#define DRAW_DISTANCE 6
 #define BUFFERWIDTH 10
 
 int m_mod(int b, int a)
@@ -19,7 +19,7 @@ ChunkManager::ChunkManager(Shader* shader, Transform* transform, Blocks* blocks,
 		m_chunks.push_back(nullptr);
 
 	m_noise.SetNoiseType(m_noise.Perlin);
-	m_noise.SetFrequency(0.001);
+	m_noise.SetFrequency(0.07);
 }
 
 ChunkManager::~ChunkManager()
@@ -83,7 +83,7 @@ void ChunkManager::LoadWorld()
 
 void ChunkManager::LoadChunkFromFile(int x, int z)
 {
-	std::string path = "world/" + std::to_string(x) + 'x' + std::to_string(z);
+	std::string path = "world/" + std::to_string(x) + 'x' + std::to_string(z) + ".cf";
 
 	std::ifstream file;
 
@@ -111,7 +111,7 @@ void ChunkManager::LoadChunkFromFile(int x, int z)
 void ChunkManager::SaveChunkToFile(int x, int z, Chunk* chunk)
 {
 	std::ofstream file;
-	file.open("world/" + std::to_string(x) + 'x' + std::to_string(z));
+	file.open("world/" + std::to_string(x) + 'x' + std::to_string(z) + ".cf");
 
 	file.write(chunk->blockIDs, sizeof(char) * CHUNKSIZE);
 
@@ -129,8 +129,7 @@ Chunk* ChunkManager::GenerateChunk(int x, int z)
 		{
 			for (int ax = 0; ax < CHUNKWIDTH; ax++)
 			{
-				//if (ay < (32 * (m_noise.GetNoise((double)(x * CHUNKWIDTH + ax)/100, (double)(z * CHUNKWIDTH + az)/100) + 1)))
-				if(ay < 100)
+				if (ay < 64 * (m_noise.GetNoise((double)(x * CHUNKWIDTH + ax)/10, (double)(z * CHUNKWIDTH + az)/10) + 1))
 					ids[blocksDrawn] = 1;
 				else
 					ids[blocksDrawn] = 0;
