@@ -4,6 +4,7 @@
 #include "transform.h"
 #include "blocks.h"
 #include "display.h"
+#include "FastNoise.h"
 
 #include <iostream>
 #include <fstream>
@@ -34,5 +35,6 @@ private:
 	std::vector<Chunk*> m_chunks;
 	int m_old_xPos = -100;
 	int m_old_zPos = -100;
+	FastNoise m_noise;
 };
 

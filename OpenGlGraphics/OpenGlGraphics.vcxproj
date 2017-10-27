@@ -152,6 +152,7 @@
     <ClCompile Include="chunk.cpp" />
     <ClCompile Include="chunkManager.cpp" />
     <ClCompile Include="display.cpp" />
+    <ClCompile Include="FastNoise.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesh.cpp" />
     <ClCompile Include="optMesh.cpp" />
@@ -165,6 +166,7 @@
     <ClInclude Include="chunk.h" />
     <ClInclude Include="chunkManager.h" />
     <ClInclude Include="display.h" />
+    <ClInclude Include="FastNoise.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="mesh.h" />
