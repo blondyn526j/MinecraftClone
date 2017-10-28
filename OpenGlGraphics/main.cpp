@@ -25,7 +25,7 @@
 bool isClosed = false;
 Display display(WIDTH, HEIGHT, "Hello Screen");
 Camera camera(glm::vec3(4.0f, 100.0, 4.0f), 80.0f, (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
-Blocks blocks(&display, 1);
+Blocks blocks(&display, 3);
 Input input(&isClosed);
 
 Shader shader("./res/basicShader");
@@ -76,9 +76,7 @@ int main(int argc, char** argv)
 		
 		shader.Update(transform, camera);
 
-		//display.ClearBuffer();
 		chunkManager.Draw(camera.position.x, camera.position.z);
-		//display.ReassignBuffer();
 		display.DrawBuffer();
 
 		display.Update();

@@ -1,6 +1,8 @@
 #include "chunkManager.h"
-#define DRAW_DISTANCE 6
+#define DRAW_DISTANCE 8
 #define BUFFERWIDTH 10
+#define SEALEVEL 60
+#define DESERTSTEP 0.5
 
 int m_mod(int b, int a)
 {
@@ -18,8 +20,18 @@ ChunkManager::ChunkManager(Shader* shader, Transform* transform, Blocks* blocks,
 	for (int i = 0; i < BUFFERWIDTH * BUFFERWIDTH; i++)
 		m_chunks.push_back(nullptr);
 
-	m_noise.SetNoiseType(m_noise.Perlin);
-	m_noise.SetFrequency(0.07);
+	m_noiseHeightMajor.SetNoiseType(m_noiseHeight.PerlinFractal);
+	m_noiseHeightMajor.SetFrequency(100);
+	m_noiseHeightMajor.SetSeed(6543);
+
+	m_noiseHeight.SetNoiseType(m_noiseHeight.Perlin);
+	m_noiseHeight.SetFrequency(300);
+	m_noiseHeight.SetSeed(68429);
+
+	m_noiseHeightMajor.SetNoiseType(m_noiseHeight.Perlin);
+	m_noiseBiome.SetSeed(75423);
+	m_noiseBiome.SetFrequency(10);
+
 }
 
 ChunkManager::~ChunkManager()
@@ -48,7 +60,6 @@ void ChunkManager::Draw(float x, float z)
 		m_old_xPos = xPos;
 		m_old_zPos = zPos;
 	}
-
 }
 
 void ChunkManager::UpdateVisiblity(float x, float z)
@@ -129,8 +140,20 @@ Chunk* ChunkManager::GenerateChunk(int x, int z)
 		{
 			for (int ax = 0; ax < CHUNKWIDTH; ax++)
 			{
-				if (ay < 64 * (m_noise.GetNoise((double)(x * CHUNKWIDTH + ax)/10, (double)(z * CHUNKWIDTH + az)/10) + 1))
-					ids[blocksDrawn] = 1;
+				double coordX = (double)(x * CHUNKWIDTH + ax) / 10000;
+				double coordZ = (double)(z * CHUNKWIDTH + az) / 10000;
+
+				if (ay < 10 * (m_noiseHeight.GetNoise(coordX, coordZ) + 1) + 55 * (m_noiseHeightMajor.GetNoise(coordX, coordZ) + 1))
+				{
+					if (m_noiseBiome.GetNoise(coordX, coordZ) > DESERTSTEP)
+						ids[blocksDrawn] = 1;
+					else
+						ids[blocksDrawn] = 2;
+				}
+				else if (ay < SEALEVEL)
+				{
+					ids[blocksDrawn] = 3;
+				}
 				else
 					ids[blocksDrawn] = 0;
 

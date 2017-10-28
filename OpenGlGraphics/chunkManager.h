@@ -35,6 +35,8 @@ private:
 	std::vector<Chunk*> m_chunks;
 	int m_old_xPos = -100;
 	int m_old_zPos = -100;
-	FastNoise m_noise;
+	FastNoise m_noiseHeight;
+	FastNoise m_noiseHeightMajor;
+	FastNoise m_noiseBiome;
 };
 
