@@ -1,7 +1,7 @@
 #include "chunkManager.h"
-#define DRAW_DISTANCE 8
+#define DRAW_DISTANCE 3
 #define BUFFERWIDTH 10
-#define SEALEVEL 60
+#define SEALEVEL 50
 #define DESERTSTEP 0.5
 
 int m_mod(int b, int a)
@@ -22,13 +22,15 @@ ChunkManager::ChunkManager(Shader* shader, Transform* transform, Blocks* blocks,
 
 	m_noiseHeightMajor.SetNoiseType(m_noiseHeight.PerlinFractal);
 	m_noiseHeightMajor.SetFrequency(100);
+	m_noiseHeightMajor.SetInterp(m_noiseHeightMajor.Hermite);
 	m_noiseHeightMajor.SetSeed(6543);
 
 	m_noiseHeight.SetNoiseType(m_noiseHeight.Perlin);
 	m_noiseHeight.SetFrequency(300);
+	m_noiseHeight.SetInterp(m_noiseHeight.Hermite);
 	m_noiseHeight.SetSeed(68429);
 
-	m_noiseHeightMajor.SetNoiseType(m_noiseHeight.Perlin);
+	m_noiseHeightMajor.SetNoiseType(m_noiseHeight.Cubic);
 	m_noiseBiome.SetSeed(75423);
 	m_noiseBiome.SetFrequency(10);
 
@@ -50,10 +52,11 @@ void ChunkManager::Draw(float x, float z)
 		for (int a = xPos - DRAW_DISTANCE; a <= xPos + DRAW_DISTANCE; a++)
 			for (int b = zPos - DRAW_DISTANCE; b <= zPos + DRAW_DISTANCE; b++)
 			{
-				if (m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->m_chunkRoot != glm::vec3(CHUNKWIDTH * a, 0, CHUNKWIDTH * b))
+				if (m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->chunkRoot != glm::vec3(CHUNKWIDTH * a, 0, CHUNKWIDTH * b))
 					LoadChunkFromFile(a, b);
 
-				m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->UpdateVisibility();
+				//m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->UpdateVisibility();
+				DrawChunk(a, b);
 			}
 
 		m_display->ReassignBuffer();
@@ -74,13 +77,78 @@ void ChunkManager::UpdateVisiblity(float x, float z)
 		for (int a = xPos - DRAW_DISTANCE; a <= xPos + DRAW_DISTANCE; a++)
 			for (int b = zPos - DRAW_DISTANCE; b <= zPos + DRAW_DISTANCE; b++)
 			{
-				if (m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->m_chunkRoot != glm::vec3(CHUNKWIDTH * a, 0, CHUNKWIDTH * b))
+				if (m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->chunkRoot != glm::vec3(CHUNKWIDTH * a, 0, CHUNKWIDTH * b))
 					LoadChunkFromFile(a, b);
 
-				m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->UpdateVisibility();
+				//DrawChunk(a, b);
+				//m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->UpdateVisibility();
 			}
 	}
 
+}
+
+void ChunkManager::DrawChunk(int ax, int az)
+{
+	Chunk* chunk = m_chunks[m_mod(ax, BUFFERWIDTH) + m_mod(az, BUFFERWIDTH) * BUFFERWIDTH];
+	//std::cout << (int)m_chunks[m_mod(ax, BUFFERWIDTH) + m_mod(az, BUFFERWIDTH) * BUFFERWIDTH]->blockIDs[24000] << std::endl;
+	int blocksDrawn = 0;
+	for (int y = 0; y < CHUNKHEIGHT; y++)
+	{
+		for (int z = 0; z < CHUNKWIDTH; z++)
+		{
+			for (int x = 0; x < CHUNKWIDTH; x++)
+			{
+				if (chunk->blockIDs[blocksDrawn] > 0)
+				{
+					//0 - UP - 0
+					//1 - FRONT - 6
+					//2 - DOWN - 12
+					//3 - RIGHT - 18
+					//4 - BACK - 24
+					//5 - LEFT - 30
+					if (x == CHUNKWIDTH - 1)
+					{
+						if (m_chunks[m_mod(ax+1, BUFFERWIDTH) + m_mod(az, BUFFERWIDTH) * BUFFERWIDTH]->blockIDs[blocksDrawn + 1 - CHUNKWIDTH] == 0)
+							m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[18], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
+					}
+					else
+					{
+						if (chunk->blockIDs[blocksDrawn + 1] == 0)
+						{
+							m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[18], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
+						}
+					}
+
+					if (x == 0)
+					{
+						if (m_chunks[m_mod(ax-1, BUFFERWIDTH) + m_mod(az, BUFFERWIDTH) * BUFFERWIDTH]->blockIDs[blocksDrawn - 1 + CHUNKWIDTH] == 0)
+							m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[30], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
+					}
+					else
+					{
+						if (chunk->blockIDs[blocksDrawn - 1] == 0)
+						{
+							m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[30], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
+						}
+					}
+					if (y == 0 || chunk->blockIDs[blocksDrawn - CHUNKWIDTH*CHUNKWIDTH] == 0)
+						m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[12], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
+
+					if (y == CHUNKHEIGHT - 1 || chunk->blockIDs[blocksDrawn + CHUNKWIDTH*CHUNKWIDTH] == 0)
+						m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[0], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
+
+					if (z == 0 || chunk->blockIDs[blocksDrawn - CHUNKWIDTH] == 0)
+						m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[6], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
+
+					if (z == CHUNKWIDTH - 1 || chunk->blockIDs[blocksDrawn + CHUNKWIDTH] == 0)
+						m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[24], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
+
+					//m_visiblilityArray[blocksDrawn] |= 1 << 0;
+				}
+				blocksDrawn++;
+			}
+		}
+	}
 }
 
 void ChunkManager::LoadWorld()

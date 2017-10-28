@@ -27,7 +27,7 @@ public:
 
 private:
 	//Chunk* m_chunk;
-
+	void DrawChunk(int ax, int az);
 	Shader* m_shader;
 	Transform* m_transform;
 	Blocks* m_blocks;

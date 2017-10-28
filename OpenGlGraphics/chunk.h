@@ -23,7 +23,7 @@ public:
 	
 	char* blockIDs;
 
-	glm::vec3 m_chunkRoot = glm::vec3(0, 0, 0);
+	glm::vec3 chunkRoot = glm::vec3(0, 0, 0);
 private:
 	//char* m_visiblilityArray;	//UP FRONT DOWN RIGHT BACK LEFT NULL NULL
 	Shader* m_shader;
