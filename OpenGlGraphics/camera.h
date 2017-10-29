@@ -9,6 +9,8 @@ public:
 	glm::vec3 forward;
 	glm::vec3 up;
 	glm::vec3 position;
+	glm::vec3 left;
+	glm::vec3 oldForward;
 
 	Camera(const glm::vec3 &pos, float fov, float aspect, float zNear, float zFar)
 	{
@@ -27,11 +29,23 @@ public:
 		return m_perspective * glm::lookAt(position, position + forward, up);
 	}
 
-	void RotateBy(float yAngle, float xAngle)
+	void Update(float vertical, float horizontal, float xMouse, float yMouse)
 	{
-		glm::vec3 oldForward = forward;
-		forward = glm::vec4(forward, 1.0f) * glm::rotate(-yAngle, up) * glm::rotate(xAngle, glm::cross(up, forward));
+		left = glm::vec3(forward.z, 0, -forward.x);
+		left /= glm::length(left);
+		position += forward * 0.3f * vertical + left * 0.3f * horizontal;
+		RotateBy(xMouse / 100.0f, yMouse / 100.0f);
+	}
 
+	void RotateBy(float xAngle, float yAngle)
+	{
+		oldForward = forward;
+		forward = glm::vec4(forward, 1.0f) * glm::rotate(-xAngle, up) * glm::rotate(yAngle, glm::cross(up, forward));
+
+		if (oldForward.x * forward.x <= 0.001f  && oldForward.z * forward.z <= 0.001f)
+		{
+			forward = glm::vec4(oldForward, 1.0f) * glm::rotate(-xAngle, up);
+		}
 		//up = glm::vec4(up, 1.0f) * glm::rotate(yAngle, glm::cross(up, oldForward));
 		//glm::quat
 	}

@@ -53,9 +53,7 @@ int main(int argc, char** argv)
 		//INPUT TEST
 		input.Update();
 
-		camera.position += camera.forward * 0.3f * (float)input.vertical + glm::cross(camera.forward, camera.up) * 0.3f * (float)input.horizontal;
-
-		camera.RotateBy(input.xMouse/100.0f, input.yMouse/100.0f);
+		camera.Update(input.vertical, input.horizontal, input.xMouse, input.yMouse);
 
 		//INPUT TEST END
 
@@ -73,7 +71,7 @@ int main(int argc, char** argv)
 		display.Clear(0.6f, 0.15f, 0.2f, 1.0f);
 		shader.Bind();
 		texture.Bind(0);
-		
+
 		shader.Update(transform, camera);
 
 		chunkManager.Draw(camera.position.x, camera.position.z);
