@@ -1,6 +1,6 @@
 #include "chunkManager.h"
-#define DRAW_DISTANCE 3
-#define BUFFERWIDTH 10
+#define DRAW_DISTANCE 8
+#define BUFFERWIDTH 20
 #define SEALEVEL 50
 #define DESERTSTEP 0.5
 
@@ -42,8 +42,8 @@ ChunkManager::~ChunkManager()
 
 void ChunkManager::Draw(float x, float z)
 {
-	int xPos = floorf(x / CHUNKWIDTH);
-	int zPos = floorf(z / CHUNKWIDTH);
+	int xPos = x / CHUNKWIDTH;
+	int zPos = z / CHUNKWIDTH;
 
 	if (xPos != m_old_xPos || zPos != m_old_zPos)
 	{
@@ -51,11 +51,12 @@ void ChunkManager::Draw(float x, float z)
 
 		for (int a = xPos - DRAW_DISTANCE; a <= xPos + DRAW_DISTANCE; a++)
 			for (int b = zPos - DRAW_DISTANCE; b <= zPos + DRAW_DISTANCE; b++)
-			{
 				if (m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->chunkRoot != glm::vec3(CHUNKWIDTH * a, 0, CHUNKWIDTH * b))
 					LoadChunkFromFile(a, b);
 
-				//m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->UpdateVisibility();
+		for (int a = xPos - DRAW_DISTANCE; a <= xPos + DRAW_DISTANCE; a++)
+			for (int b = zPos - DRAW_DISTANCE; b <= zPos + DRAW_DISTANCE; b++)
+			{
 				DrawChunk(a, b);
 			}
 
@@ -108,7 +109,7 @@ void ChunkManager::DrawChunk(int ax, int az)
 					//5 - LEFT - 30
 					if (x == CHUNKWIDTH - 1)
 					{
-						if (m_chunks[m_mod(ax+1, BUFFERWIDTH) + m_mod(az, BUFFERWIDTH) * BUFFERWIDTH]->blockIDs[blocksDrawn + 1 - CHUNKWIDTH] == 0)
+						if (m_chunks[m_mod(ax + 1, BUFFERWIDTH) + m_mod(az, BUFFERWIDTH) * BUFFERWIDTH]->blockIDs[blocksDrawn + 1 - CHUNKWIDTH] == 0)
 							m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[18], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
 					}
 					else
@@ -121,7 +122,7 @@ void ChunkManager::DrawChunk(int ax, int az)
 
 					if (x == 0)
 					{
-						if (m_chunks[m_mod(ax-1, BUFFERWIDTH) + m_mod(az, BUFFERWIDTH) * BUFFERWIDTH]->blockIDs[blocksDrawn - 1 + CHUNKWIDTH] == 0)
+						if (m_chunks[m_mod(ax - 1, BUFFERWIDTH) + m_mod(az, BUFFERWIDTH) * BUFFERWIDTH]->blockIDs[blocksDrawn - 1 + CHUNKWIDTH] == 0)
 							m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[30], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
 					}
 					else
@@ -131,17 +132,40 @@ void ChunkManager::DrawChunk(int ax, int az)
 							m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[30], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
 						}
 					}
-					if (y == 0 || chunk->blockIDs[blocksDrawn - CHUNKWIDTH*CHUNKWIDTH] == 0)
-						m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[12], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
+					//if (y == 0 || chunk->blockIDs[blocksDrawn - CHUNKWIDTH*CHUNKWIDTH] == 0)
+					//	m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[12], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
 
 					if (y == CHUNKHEIGHT - 1 || chunk->blockIDs[blocksDrawn + CHUNKWIDTH*CHUNKWIDTH] == 0)
 						m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[0], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
 
-					if (z == 0 || chunk->blockIDs[blocksDrawn - CHUNKWIDTH] == 0)
-						m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[6], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
+					if (z == 0)
+					{
+						if (m_chunks[m_mod(ax, BUFFERWIDTH) + m_mod(az - 1, BUFFERWIDTH) * BUFFERWIDTH]->blockIDs[blocksDrawn + CHUNKWIDTH * (CHUNKWIDTH - 1)] == 0)
+							m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[6], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
+					}
+					else
+					{
+						if (chunk->blockIDs[blocksDrawn - CHUNKWIDTH] == 0)
+						{
+							m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[6], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
+						}
+					}
 
-					if (z == CHUNKWIDTH - 1 || chunk->blockIDs[blocksDrawn + CHUNKWIDTH] == 0)
-						m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[24], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
+					if (z == CHUNKWIDTH - 1)
+					{
+						if (m_chunks[m_mod(ax, BUFFERWIDTH) + m_mod(az + 1, BUFFERWIDTH) * BUFFERWIDTH]->blockIDs[blocksDrawn - CHUNKWIDTH * (CHUNKWIDTH - 1)] == 0)
+							m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[24], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
+					}
+					else
+					{
+						if (chunk->blockIDs[blocksDrawn + CHUNKWIDTH] == 0)
+						{
+							m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[24], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
+						}
+					}
+
+					//if (z == CHUNKWIDTH - 1 || chunk->blockIDs[blocksDrawn + CHUNKWIDTH] == 0)
+					//	m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[24], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
 
 					//m_visiblilityArray[blocksDrawn] |= 1 << 0;
 				}

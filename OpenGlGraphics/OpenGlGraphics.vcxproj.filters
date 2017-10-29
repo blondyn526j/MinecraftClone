@@ -102,5 +102,11 @@
     </None>
     <None Include="..\Debug\glew32.dll" />
     <None Include="..\Debug\SDL2.dll" />
+    <None Include="res\waveShader.fs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\waveShader.vs">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

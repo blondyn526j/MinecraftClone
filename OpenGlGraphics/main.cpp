@@ -24,7 +24,7 @@
 
 bool isClosed = false;
 Display display(WIDTH, HEIGHT, "Hello Screen");
-Camera camera(glm::vec3(4.0f, 100.0, 4.0f), 80.0f, (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
+Camera camera(glm::vec3(8.0f, 100.0, 8.0f), 80.0f, (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
 Blocks blocks(&display, 3);
 Input input(&isClosed);
 
