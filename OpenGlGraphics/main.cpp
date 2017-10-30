@@ -70,7 +70,7 @@ int main(int argc, char** argv)
 
 		//RAYCAST TEST END
 
-		display.Clear(0.6f, 0.15f, 0.2f, 1.0f);
+		display.Clear(0.7f, 0.9f, 0.98f, 1.0f);
 		shader.Bind();
 		texture.Bind(0);
 

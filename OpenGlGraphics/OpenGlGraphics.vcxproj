@@ -184,6 +184,9 @@
     <None Include="res\waveShader.fs" />
     <None Include="res\waveShader.vs" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\Texture.jpg" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -23,7 +23,6 @@ public:
 	void SaveChunkToFile(int x, int z, Chunk* chunk);
 	Chunk* GenerateChunk(int x, int z);
 	void Draw(float x, float z);
-	void UpdateVisiblity(float x, float z);
 
 private:
 	//Chunk* m_chunk;
@@ -38,5 +37,6 @@ private:
 	FastNoise m_noiseHeight;
 	FastNoise m_noiseHeightMajor;
 	FastNoise m_noiseBiome;
+	bool isTransparent(int idOther, int idThis);
 };
 
