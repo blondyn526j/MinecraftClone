@@ -62,7 +62,7 @@ Mesh::~Mesh()
 
 void Mesh::Draw()
 {
-	m_display->AppendToDrawBuffer(&(vertices[0]), 36, &glm::vec3(0,0,0));
+	//m_display->AppendToDrawBuffer(&(vertices[0]), 36, &glm::vec3(0,0,0));
 
 	//glBindVertexArray(m_vertexArrayObject);
 

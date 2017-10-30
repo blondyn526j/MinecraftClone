@@ -29,6 +29,8 @@ Blocks blocks(&display, 3);
 Input input(&isClosed);
 
 Shader shader("./res/basicShader");
+Shader waveShader("./res/waveShader");
+
 Texture texture("./res/Texture.jpg");
 Transform transform;
 
@@ -75,8 +77,12 @@ int main(int argc, char** argv)
 		shader.Update(transform, camera);
 
 		chunkManager.Draw(camera.position.x, camera.position.z);
-		display.DrawBuffer();
+		display.DrawBuffer(Display::bufferTypes::SOLID);
+		
+		waveShader.Bind();
+		waveShader.Update(transform, camera);
 
+		display.DrawBuffer(Display::bufferTypes::LIQUID);
 		display.Update();
 		counter += 0.05f;
 	}

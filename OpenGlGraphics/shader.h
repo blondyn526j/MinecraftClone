@@ -33,5 +33,7 @@ private:
 	GLuint m_program;
 	GLuint m_shaders[NUM_SHADERS];
 	GLuint m_uniforms[NUM_UNIFORMS];
+	GLuint m_timer;
+	float timer;
 };
 

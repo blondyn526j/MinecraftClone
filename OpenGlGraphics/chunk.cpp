@@ -27,7 +27,7 @@ void Chunk::DrawChunk()
 			for (int x = 0; x < CHUNKWIDTH; x++)
 			{
 				if (blockIDs[blocksDrawn] > 0)
-					m_display->AppendToDrawBuffer(&(*m_blocks)[blockIDs[blocksDrawn]]->vertices[0], 36, &(glm::vec3(x, y, z) + chunkRoot));
+					m_display->AppendToDrawBuffer(&(*m_blocks)[blockIDs[blocksDrawn]]->vertices[0], 36, &(glm::vec3(x, y, z) + chunkRoot), Display::bufferTypes::SOLID);
 				blocksDrawn++;
 			}
 		}
@@ -55,22 +55,22 @@ void Chunk::UpdateVisibility()
 					//4 - BACK - 24
 					//5 - LEFT - 30
 					if (x == CHUNKWIDTH-1 || blockIDs[blocksDrawn + 1] == 0)
-						m_display->AppendToDrawBuffer(&(*m_blocks)[blockIDs[blocksDrawn]]->vertices[18], 6, &(glm::vec3(x, y, z) + chunkRoot));
+						m_display->AppendToDrawBuffer(&(*m_blocks)[blockIDs[blocksDrawn]]->vertices[18], 6, &(glm::vec3(x, y, z) + chunkRoot), Display::bufferTypes::SOLID);
 
 					if (x == 0 || blockIDs[blocksDrawn - 1] == 0)
-						m_display->AppendToDrawBuffer(&(*m_blocks)[blockIDs[blocksDrawn]]->vertices[30], 6, &(glm::vec3(x, y, z) + chunkRoot));
+						m_display->AppendToDrawBuffer(&(*m_blocks)[blockIDs[blocksDrawn]]->vertices[30], 6, &(glm::vec3(x, y, z) + chunkRoot), Display::bufferTypes::SOLID);
 
 					if (y == 0 || blockIDs[blocksDrawn - CHUNKWIDTH*CHUNKWIDTH] == 0)
-						m_display->AppendToDrawBuffer(&(*m_blocks)[blockIDs[blocksDrawn]]->vertices[12], 6, &(glm::vec3(x, y, z) + chunkRoot));
+						m_display->AppendToDrawBuffer(&(*m_blocks)[blockIDs[blocksDrawn]]->vertices[12], 6, &(glm::vec3(x, y, z) + chunkRoot), Display::bufferTypes::SOLID);
 
 					if (y == CHUNKHEIGHT-1 || blockIDs[blocksDrawn + CHUNKWIDTH*CHUNKWIDTH] == 0)
-						m_display->AppendToDrawBuffer(&(*m_blocks)[blockIDs[blocksDrawn]]->vertices[0], 6, &(glm::vec3(x, y, z) + chunkRoot));
+						m_display->AppendToDrawBuffer(&(*m_blocks)[blockIDs[blocksDrawn]]->vertices[0], 6, &(glm::vec3(x, y, z) + chunkRoot), Display::bufferTypes::SOLID);
 
 					if (z == 0 || blockIDs[blocksDrawn - CHUNKWIDTH] == 0)
-						m_display->AppendToDrawBuffer(&(*m_blocks)[blockIDs[blocksDrawn]]->vertices[6], 6, &(glm::vec3(x, y, z) + chunkRoot));
+						m_display->AppendToDrawBuffer(&(*m_blocks)[blockIDs[blocksDrawn]]->vertices[6], 6, &(glm::vec3(x, y, z) + chunkRoot), Display::bufferTypes::SOLID);
 
 					if (z == CHUNKWIDTH-1 || blockIDs[blocksDrawn + CHUNKWIDTH] == 0)
-						m_display->AppendToDrawBuffer(&(*m_blocks)[blockIDs[blocksDrawn]]->vertices[24], 6, &(glm::vec3(x, y, z) + chunkRoot));
+						m_display->AppendToDrawBuffer(&(*m_blocks)[blockIDs[blocksDrawn]]->vertices[24], 6, &(glm::vec3(x, y, z) + chunkRoot), Display::bufferTypes::SOLID);
 
 					//m_visiblilityArray[blocksDrawn] |= 1 << 0;
 				}
