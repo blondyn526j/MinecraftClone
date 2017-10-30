@@ -8,7 +8,7 @@ class Display
 {
 public:
 
-	enum bufferTypes
+	enum
 	{
 		SOLID,
 		LIQUID,
@@ -23,7 +23,7 @@ public:
 	void Clear(float red, float green, float blue, float alpha);
 	void InitializeBuffer();
 	void AppendToDrawBuffer(Vertex* vertices, int numVertices, glm::vec3* offset, int type);
-	void DrawBuffer(bufferTypes type);
+	void DrawBuffer(int type);
 	void ClearBuffer();
 	void ReassignBuffer();
 
@@ -44,9 +44,9 @@ private:
 		NUM_BUFFERS
 	};
 
-	std::vector<glm::vec3> positions[bufferTypes::NUM_TYPES];
-	std::vector<glm::vec2> texCoords[bufferTypes::NUM_TYPES];
-	int m_bufferedVertices[bufferTypes::NUM_TYPES] = { 0, 0 };
-	GLuint m_vertexArrayObject[bufferTypes::NUM_TYPES];
-	GLuint m_vertexArrayBuffers[bufferTypes::NUM_TYPES][NUM_BUFFERS];
+	std::vector<glm::vec3> positions[NUM_TYPES];
+	std::vector<glm::vec2> texCoords[NUM_TYPES];
+	int m_bufferedVertices[NUM_TYPES] = { 0, 0 };
+	GLuint m_vertexArrayObject[NUM_TYPES];
+	GLuint m_vertexArrayBuffers[NUM_TYPES][NUM_BUFFERS];
 };

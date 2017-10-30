@@ -19,8 +19,8 @@
 #include <GLFW/glfw3.h>
 #include <sdl2\SDL.h>
 
-#define WIDTH 800
-#define HEIGHT 600
+#define WIDTH 1280
+#define HEIGHT 720
 
 bool isClosed = false;
 Display display(WIDTH, HEIGHT, "Hello Screen");
@@ -77,12 +77,12 @@ int main(int argc, char** argv)
 		shader.Update(transform, camera);
 
 		chunkManager.Draw(camera.position.x, camera.position.z);
-		display.DrawBuffer(Display::bufferTypes::SOLID);
+		display.DrawBuffer(Display::SOLID);
 		
 		waveShader.Bind();
 		waveShader.Update(transform, camera);
 
-		display.DrawBuffer(Display::bufferTypes::LIQUID);
+		display.DrawBuffer(Display::LIQUID);
 		display.Update();
 		counter += 0.05f;
 	}

@@ -67,7 +67,7 @@ void Display::Clear(float red, float green, float blue, float alpha)
 
 void Display::ClearBuffer()
 {
-	for (int i = 0; i < bufferTypes::NUM_TYPES; i++)
+	for (int i = 0; i < NUM_TYPES; i++)
 	{
 		m_bufferedVertices[i] = 0;
 		positions[i].clear();
@@ -77,7 +77,7 @@ void Display::ClearBuffer()
 
 void Display::ReassignBuffer()
 {
-	for (int i = 0; i < bufferTypes::NUM_TYPES; i++)
+	for (int i = 0; i < NUM_TYPES; i++)
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[i][POSITION_VB]);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * m_bufferedVertices[i], &(positions[i][0]));
@@ -95,7 +95,7 @@ bool Display::IsClosed()
 
 void Display::InitializeBuffer()
 {
-	for (int i = 0; i < bufferTypes::NUM_TYPES; i++)
+	for (int i = 0; i < NUM_TYPES; i++)
 	{
 		positions[i].reserve(bufferSize);
 		texCoords[i].reserve(bufferSize);
@@ -135,7 +135,7 @@ void Display::AppendToDrawBuffer(Vertex* vertices, int numVertices, glm::vec3* o
 	m_bufferedVertices[type] += numVertices;
 }
 
-void Display::DrawBuffer(bufferTypes type)
+void Display::DrawBuffer(int type)
 {
 	glBindVertexArray(m_vertexArrayObject[type]);
 
