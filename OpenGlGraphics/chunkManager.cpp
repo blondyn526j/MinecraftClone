@@ -1,20 +1,24 @@
 #include "chunkManager.h"
 #define DRAW_DISTANCE 9
 #define BUFFERWIDTH 22
-#define SEALEVEL 50
+#define SEALEVEL 55
 #define DESERTSTEP 0.5
 
-#define INFLUENCE_MAJ 120
+#define INFLUENCE_MAJ 160
 #define INFLUENCE_MED 90
-#define INFLUENCE_MIN 20
+#define INFLUENCE_MIN 1.5
 
-int m_mod(int b, int a)
+int m_mod(const int b, const int a)
 {
 	return (b % a + a) % a;
 }
-int m_xyzToIndex(int x, int y, int z)
+int m_xyzToIndex(const int x, const int y, const int z)
 {
 	return x + CHUNKWIDTH * z + CHUNKWIDTH * CHUNKWIDTH * y;
+}
+double m_clamp(const double val, const double max, const double min)
+{
+	return std::fmin(max, std::fmax(val, min));
 }
 
 ChunkManager::ChunkManager(Shader* shader, Transform* transform, Blocks* blocks, Display* display)
@@ -29,17 +33,17 @@ ChunkManager::ChunkManager(Shader* shader, Transform* transform, Blocks* blocks,
 		m_chunks.push_back(nullptr);
 
 	m_mapHeightMaj.SetNoiseType(FastNoise::PerlinFractal);
-	m_mapHeightMaj.SetFrequency(1000);
+	m_mapHeightMaj.SetFrequency(1500);
 	m_mapHeightMaj.SetInterp(FastNoise::Hermite);
-	m_mapHeightMaj.SetSeed(10234);
+	m_mapHeightMaj.SetSeed(10134);
 
 	m_mapHeightMed.SetNoiseType(FastNoise::PerlinFractal);
-	m_mapHeightMed.SetFrequency(15000);
+	m_mapHeightMed.SetFrequency(8000);
 	m_mapHeightMed.SetInterp(FastNoise::Hermite);
 	m_mapHeightMed.SetSeed(9663);
 
 	m_mapHeightMin.SetNoiseType(FastNoise::Perlin);
-	m_mapHeightMin.SetFrequency(30000);
+	m_mapHeightMin.SetFrequency(110000);
 	m_mapHeightMin.SetInterp(FastNoise::Hermite);
 	m_mapHeightMin.SetSeed(626685);
 
@@ -49,9 +53,9 @@ ChunkManager::ChunkManager(Shader* shader, Transform* transform, Blocks* blocks,
 	m_mapTemp.SetSeed(626685);
 
 	m_mapVariety.SetNoiseType(FastNoise::Perlin);
-	m_mapVariety.SetFrequency(2000);
+	m_mapVariety.SetFrequency(3000);
 	m_mapVariety.SetInterp(FastNoise::Hermite);
-	m_mapVariety.SetSeed(8465);
+	m_mapVariety.SetSeed(80465);
 
 	//for (float f = 0; f < 255; f += 0.01f)
 	//	std::cout << m_mapVeriety.GetNoise(f, 0) << std::endl;
@@ -231,11 +235,12 @@ Chunk* ChunkManager::GenerateChunk(int x, int z)
 		{
 			double coordX = (double)(x * CHUNKWIDTH + ax) / 1000000;
 			double coordZ = (double)(z * CHUNKWIDTH + az) / 1000000;
-			double valMaj = (m_mapHeightMaj.GetNoise(coordX, coordZ) + 1)/2;
-			double valMed = (m_mapHeightMed.GetNoise(coordX, coordZ) + 1)/2;
-			double valMin = (m_mapHeightMin.GetNoise(coordX, coordZ) + 1)/2;
-			double valVar = (m_mapVariety.GetNoise(coordX, coordZ) + 1) / 2;
+			double valMaj = m_clamp(m_mapHeightMaj.GetNoise(coordX, coordZ) + 0.5, 1.5, 0.02);
+			double valMed = m_clamp((m_mapHeightMed.GetNoise(coordX, coordZ) + 0.7) / 2, 1, 0);
+			double valMin = m_mapHeightMin.GetNoise(coordX, coordZ) + 0.5;
+			double valVar = m_clamp(m_mapVariety.GetNoise(coordX, coordZ) + 0.5, 1.5, 0);
 			double valTemp = (m_mapTemp.GetNoise(coordX, coordZ) + 1) / 2;
+			
 
 			for (int ay = 0; ay < CHUNKHEIGHT; ay++)
 			{
@@ -259,6 +264,8 @@ Chunk* ChunkManager::GenerateChunk(int x, int z)
 				else
 					ids[m_xyzToIndex(ax, ay, az)] = 0;
 
+				//if(ax == 0)
+				//	ids[m_xyzToIndex(ax, ay, az)] = 0;
 			}
 		}
 	}
