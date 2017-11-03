@@ -1,5 +1,7 @@
 #pragma once
 
+#define SPEED 0.65f
+
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 
@@ -33,7 +35,7 @@ public:
 	{
 		left = glm::vec3(forward.z, 0, -forward.x);
 		left /= glm::length(left);
-		position += forward * 0.3f * vertical + left * 0.3f * horizontal;
+		position += forward * SPEED * vertical + left * SPEED * horizontal;
 		RotateBy(xMouse / 100.0f, yMouse / 100.0f);
 	}
 

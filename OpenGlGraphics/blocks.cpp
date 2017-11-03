@@ -85,7 +85,7 @@ Blocks::Blocks(Display* display, int numBlocks)
 			16,18,17,
 			16,19,18
 		};*/
-		m_meshes.push_back(new Mesh(display, cubeVertices, 36));
+		m_meshes.push_back(new Mesh(cubeVertices, 36));
 	}
 }
 

@@ -9,7 +9,7 @@
 class Mesh
 {
 public:
-	Mesh(Display* display, Vertex* vertices, unsigned int numVertices);
+	Mesh(Vertex* vertices, unsigned int numVertices);
 	Mesh() {}
 	//Mesh(Vertex* vertices, unsigned int* indecies);
 	virtual ~Mesh();
@@ -63,6 +63,6 @@ private:
 	GLuint m_vertexArrayBuffers[NUM_BUFFERS];
 	unsigned int m_drawCount;
 	bool m_initialized = false;
-	Display* m_display;
+	//Display* m_display;
 };
 

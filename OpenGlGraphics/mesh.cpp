@@ -2,9 +2,9 @@
 #include <vector>
 
 
-Mesh::Mesh(Display* display, Vertex* vertices, unsigned int numVertices)
+Mesh::Mesh(Vertex* vertices, unsigned int numVertices)
 {
-	m_display = display;
+	//m_display = display;
 
 	this->vertices.reserve(numVertices);
 	for (int i = 0; i < numVertices; i++)

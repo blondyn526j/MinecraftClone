@@ -44,6 +44,11 @@ Display::Display(int width, int height, const std::string& title)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	//glEnable(GL_FOG);
+	//glFogfv(GL_FOG_START, &fogStart);
+	//glFogfv(GL_FOG_START, &fogEnd);
+
+
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 }
 

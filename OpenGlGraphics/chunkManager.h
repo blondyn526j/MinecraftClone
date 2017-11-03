@@ -34,9 +34,12 @@ private:
 	std::vector<Chunk*> m_chunks;
 	int m_old_xPos = -100;
 	int m_old_zPos = -100;
-	FastNoise m_noiseHeight;
-	FastNoise m_noiseHeightMajor;
-	FastNoise m_noiseBiome;
+	FastNoise m_mapHeightMin;
+	FastNoise m_mapHeightMed;
+	FastNoise m_mapHeightMaj;
+	FastNoise m_mapTemp;
+	FastNoise m_mapVariety;
+
 	bool isTransparent(int idOther, int idThis);
 };
 

@@ -49,4 +49,7 @@ private:
 	int m_bufferedVertices[NUM_TYPES] = { 0, 0 };
 	GLuint m_vertexArrayObject[NUM_TYPES];
 	GLuint m_vertexArrayBuffers[NUM_TYPES][NUM_BUFFERS];
+
+	GLfloat fogStart = 10.0f;
+	GLfloat fogEnd = 15.0f;
 };

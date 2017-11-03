@@ -1,12 +1,12 @@
 #include "chunk.h"
 
-Chunk::Chunk(char* ids, glm::vec3 chunkRoot, Shader* shader, Transform* transform, Blocks* blocks, Display* display)
+Chunk::Chunk(char* ids, glm::vec3 chunkRoot)
 {
 	blockIDs = ids;
-	m_shader = shader;
+	/*m_shader = shader;
 	m_transform = transform;
 	m_blocks = blocks;
-	m_display = display;
+	m_display = display;*/
 	this->chunkRoot = chunkRoot;
 
 	//m_visiblilityArray = new char[CHUNKSIZE];
@@ -17,6 +17,7 @@ Chunk::~Chunk()
 	delete(blockIDs);
 }
 
+/*
 void Chunk::DrawChunk()
 {
 	int blocksDrawn = 0;
@@ -36,7 +37,9 @@ void Chunk::DrawChunk()
 	//m_shader->UpdateTransform(*m_transform);
 	m_transform->pos = glm::vec3(0, 0, 0);
 }
+*/
 
+/*
 void Chunk::UpdateVisibility()
 {
 	int blocksDrawn = 0;
@@ -79,3 +82,4 @@ void Chunk::UpdateVisibility()
 		}
 	}
 }
+*/

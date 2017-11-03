@@ -1,12 +1,20 @@
 #include "chunkManager.h"
 #define DRAW_DISTANCE 9
-#define BUFFERWIDTH 20
+#define BUFFERWIDTH 22
 #define SEALEVEL 50
 #define DESERTSTEP 0.5
+
+#define INFLUENCE_MAJ 120
+#define INFLUENCE_MED 90
+#define INFLUENCE_MIN 20
 
 int m_mod(int b, int a)
 {
 	return (b % a + a) % a;
+}
+int m_xyzToIndex(int x, int y, int z)
+{
+	return x + CHUNKWIDTH * z + CHUNKWIDTH * CHUNKWIDTH * y;
 }
 
 ChunkManager::ChunkManager(Shader* shader, Transform* transform, Blocks* blocks, Display* display)
@@ -20,19 +28,33 @@ ChunkManager::ChunkManager(Shader* shader, Transform* transform, Blocks* blocks,
 	for (int i = 0; i < BUFFERWIDTH * BUFFERWIDTH; i++)
 		m_chunks.push_back(nullptr);
 
-	m_noiseHeightMajor.SetNoiseType(m_noiseHeight.PerlinFractal);
-	m_noiseHeightMajor.SetFrequency(100);
-	m_noiseHeightMajor.SetInterp(m_noiseHeightMajor.Hermite);
-	m_noiseHeightMajor.SetSeed(6543);
+	m_mapHeightMaj.SetNoiseType(FastNoise::PerlinFractal);
+	m_mapHeightMaj.SetFrequency(1000);
+	m_mapHeightMaj.SetInterp(FastNoise::Hermite);
+	m_mapHeightMaj.SetSeed(10234);
 
-	m_noiseHeight.SetNoiseType(m_noiseHeight.Perlin);
-	m_noiseHeight.SetFrequency(300);
-	m_noiseHeight.SetInterp(m_noiseHeight.Hermite);
-	m_noiseHeight.SetSeed(68429);
+	m_mapHeightMed.SetNoiseType(FastNoise::PerlinFractal);
+	m_mapHeightMed.SetFrequency(15000);
+	m_mapHeightMed.SetInterp(FastNoise::Hermite);
+	m_mapHeightMed.SetSeed(9663);
 
-	m_noiseHeightMajor.SetNoiseType(m_noiseHeight.Cubic);
-	m_noiseBiome.SetSeed(75423);
-	m_noiseBiome.SetFrequency(10);
+	m_mapHeightMin.SetNoiseType(FastNoise::Perlin);
+	m_mapHeightMin.SetFrequency(30000);
+	m_mapHeightMin.SetInterp(FastNoise::Hermite);
+	m_mapHeightMin.SetSeed(626685);
+
+	m_mapTemp.SetNoiseType(FastNoise::Perlin);
+	m_mapTemp.SetFrequency(700);
+	m_mapTemp.SetInterp(FastNoise::Hermite);
+	m_mapTemp.SetSeed(626685);
+
+	m_mapVariety.SetNoiseType(FastNoise::Perlin);
+	m_mapVariety.SetFrequency(2000);
+	m_mapVariety.SetInterp(FastNoise::Hermite);
+	m_mapVariety.SetSeed(8465);
+
+	//for (float f = 0; f < 255; f += 0.01f)
+	//	std::cout << m_mapVeriety.GetNoise(f, 0) << std::endl;
 
 }
 
@@ -182,7 +204,7 @@ void ChunkManager::LoadChunkFromFile(int x, int z)
 	file.read(ids, sizeof(char) * CHUNKSIZE);
 
 	delete(m_chunks[m_mod(x, BUFFERWIDTH) + BUFFERWIDTH * m_mod(z, BUFFERWIDTH)]);
-	m_chunks[m_mod(x, BUFFERWIDTH) + BUFFERWIDTH * m_mod(z, BUFFERWIDTH)] = new Chunk(ids, glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z), m_shader, m_transform, m_blocks, m_display);
+	m_chunks[m_mod(x, BUFFERWIDTH) + BUFFERWIDTH * m_mod(z, BUFFERWIDTH)] = new Chunk(ids, glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z));
 
 	file.close();
 
@@ -202,36 +224,46 @@ void ChunkManager::SaveChunkToFile(int x, int z, Chunk* chunk)
 Chunk* ChunkManager::GenerateChunk(int x, int z)
 {
 	char* ids = new char[CHUNKSIZE];
-	int blocksDrawn = 0;
-	for (int ay = 0; ay < CHUNKHEIGHT; ay++)
-	{
-		for (int az = 0; az < CHUNKWIDTH; az++)
-		{
-			for (int ax = 0; ax < CHUNKWIDTH; ax++)
-			{
-				double coordX = (double)(x * CHUNKWIDTH + ax) / 10000;
-				double coordZ = (double)(z * CHUNKWIDTH + az) / 10000;
 
-				if (ay < 10 * (m_noiseHeight.GetNoise(coordX, coordZ) + 1) + 55 * (m_noiseHeightMajor.GetNoise(coordX, coordZ) + 1))
+	for (int az = 0; az < CHUNKWIDTH; az++)
+	{
+		for (int ax = 0; ax < CHUNKWIDTH; ax++)
+		{
+			double coordX = (double)(x * CHUNKWIDTH + ax) / 1000000;
+			double coordZ = (double)(z * CHUNKWIDTH + az) / 1000000;
+			double valMaj = (m_mapHeightMaj.GetNoise(coordX, coordZ) + 1)/2;
+			double valMed = (m_mapHeightMed.GetNoise(coordX, coordZ) + 1)/2;
+			double valMin = (m_mapHeightMin.GetNoise(coordX, coordZ) + 1)/2;
+			double valVar = (m_mapVariety.GetNoise(coordX, coordZ) + 1) / 2;
+			double valTemp = (m_mapTemp.GetNoise(coordX, coordZ) + 1) / 2;
+
+			for (int ay = 0; ay < CHUNKHEIGHT; ay++)
+			{
+				int groundLevel =
+					INFLUENCE_MAJ * valMaj +
+					valVar * (
+						INFLUENCE_MED * valMed +
+						INFLUENCE_MIN * valMin);
+
+				if (ay < groundLevel)
 				{
-					if (m_noiseBiome.GetNoise(coordX, coordZ) > DESERTSTEP)
-						ids[blocksDrawn] = 1;
+					if (valVar > DESERTSTEP)
+						ids[m_xyzToIndex(ax, ay, az)] = 1;
 					else
-						ids[blocksDrawn] = 2;
+						ids[m_xyzToIndex(ax, ay, az)] = 2;
 				}
 				else if (ay < SEALEVEL)
 				{
-					ids[blocksDrawn] = 3;
+					ids[m_xyzToIndex(ax, ay, az)] = 3;
 				}
 				else
-					ids[blocksDrawn] = 0;
+					ids[m_xyzToIndex(ax, ay, az)] = 0;
 
-				blocksDrawn++;
 			}
 		}
 	}
 
-	Chunk* chunk = new Chunk(ids, glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z), m_shader, m_transform, m_blocks, m_display);
+	Chunk* chunk = new Chunk(ids, glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z));
 	m_chunks[m_mod(x, BUFFERWIDTH) + BUFFERWIDTH * m_mod(z, BUFFERWIDTH)] = chunk;
 	return chunk;
 }

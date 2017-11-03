@@ -48,7 +48,7 @@ void Shader::Update(Transform &transform, const Camera &camera)
 
 	if(m_timer != -1)
 	glUniform1f(m_timer, timer);
-	timer += 0.003;
+	timer += 0.013;
 }
 
 GLuint Shader::CreateShader(const std::string &text, GLenum shaderType)
