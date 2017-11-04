@@ -39,13 +39,13 @@
     <ClCompile Include="blocks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="optMesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="chunkManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FastNoise.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="structures.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -80,9 +80,6 @@
     <ClInclude Include="blocks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="optMesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="chunkManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -90,6 +87,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FastNoise.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="structures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

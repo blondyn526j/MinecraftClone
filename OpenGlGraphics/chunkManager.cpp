@@ -21,12 +21,13 @@ double m_clamp(const double val, const double max, const double min)
 	return std::fmin(max, std::fmax(val, min));
 }
 
-ChunkManager::ChunkManager(Shader* shader, Transform* transform, Blocks* blocks, Display* display)
+ChunkManager::ChunkManager(Blocks* blocks, Display* display)
 {
-	m_shader = shader;
-	m_transform = transform;
+	//m_shader = shader;
+	//m_transform = transform;
 	m_blocks = blocks;
 	m_display = display;
+	m_structures = Structures();
 
 	m_chunks.reserve(BUFFERWIDTH * BUFFERWIDTH);
 	for (int i = 0; i < BUFFERWIDTH * BUFFERWIDTH; i++)
@@ -35,7 +36,7 @@ ChunkManager::ChunkManager(Shader* shader, Transform* transform, Blocks* blocks,
 	m_mapHeightMaj.SetNoiseType(FastNoise::PerlinFractal);
 	m_mapHeightMaj.SetFrequency(1500);
 	m_mapHeightMaj.SetInterp(FastNoise::Hermite);
-	m_mapHeightMaj.SetSeed(10134);
+	m_mapHeightMaj.SetSeed(108134);
 
 	m_mapHeightMed.SetNoiseType(FastNoise::PerlinFractal);
 	m_mapHeightMed.SetFrequency(8000);
@@ -48,7 +49,7 @@ ChunkManager::ChunkManager(Shader* shader, Transform* transform, Blocks* blocks,
 	m_mapHeightMin.SetSeed(626685);
 
 	m_mapTemp.SetNoiseType(FastNoise::Perlin);
-	m_mapTemp.SetFrequency(700);
+	m_mapTemp.SetFrequency(7000);
 	m_mapTemp.SetInterp(FastNoise::Hermite);
 	m_mapTemp.SetSeed(626685);
 
@@ -56,9 +57,6 @@ ChunkManager::ChunkManager(Shader* shader, Transform* transform, Blocks* blocks,
 	m_mapVariety.SetFrequency(3000);
 	m_mapVariety.SetInterp(FastNoise::Hermite);
 	m_mapVariety.SetSeed(80465);
-
-	//for (float f = 0; f < 255; f += 0.01f)
-	//	std::cout << m_mapVeriety.GetNoise(f, 0) << std::endl;
 
 }
 
@@ -68,6 +66,9 @@ ChunkManager::~ChunkManager()
 
 void ChunkManager::Draw(float x, float z)
 {
+	m_display->Clear(0.7f + (m_mapTemp.GetNoise(x / 1000000, z / 1000000)) * 0.5, 0.9f + (m_mapTemp.GetNoise(x / 1000000, z / 1000000)) * 0.08, 0.98f, 1.0f);
+	//std::cout << 2 * (m_mapTemp.GetNoise(x / 1000000, z / 1000000)) << std::endl;
+
 	int xPos = x / CHUNKWIDTH;
 	int zPos = z / CHUNKWIDTH;
 
@@ -138,6 +139,9 @@ void ChunkManager::DrawChunk(int ax, int az)
 					//if (y == 0 || chunk->blockIDs[blocksDrawn - CHUNKWIDTH*CHUNKWIDTH] == 0)
 					//	m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[12], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot));
 
+					if (y != 0 && isTransparent(chunk->blockIDs[blocksDrawn - CHUNKWIDTH*CHUNKWIDTH], chunk->blockIDs[blocksDrawn]))
+						m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[12], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot), (chunk->blockIDs[blocksDrawn] != 3) ? Display::SOLID : Display::LIQUID);
+
 					if (y == CHUNKHEIGHT - 1 || isTransparent(chunk->blockIDs[blocksDrawn + CHUNKWIDTH*CHUNKWIDTH], chunk->blockIDs[blocksDrawn]))
 						m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[0], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot), (chunk->blockIDs[blocksDrawn] != 3) ? Display::SOLID : Display::LIQUID);
 
@@ -189,7 +193,7 @@ void ChunkManager::LoadWorld()
 
 void ChunkManager::LoadChunkFromFile(int x, int z)
 {
-	std::string path = "world/" + std::to_string(x) + 'x' + std::to_string(z) + ".cf";
+	std::string path = "world/" + std::to_string(x) + 'x' + std::to_string(z) + ".chf";
 
 	std::ifstream file;
 
@@ -217,7 +221,7 @@ void ChunkManager::LoadChunkFromFile(int x, int z)
 void ChunkManager::SaveChunkToFile(int x, int z, Chunk* chunk)
 {
 	std::ofstream file;
-	file.open("world/" + std::to_string(x) + 'x' + std::to_string(z) + ".cf");
+	file.open("world/" + std::to_string(x) + 'x' + std::to_string(z) + ".chf");
 
 	file.write(chunk->blockIDs, sizeof(char) * CHUNKSIZE);
 
@@ -240,35 +244,64 @@ Chunk* ChunkManager::GenerateChunk(int x, int z)
 			double valMin = m_mapHeightMin.GetNoise(coordX, coordZ) + 0.5;
 			double valVar = m_clamp(m_mapVariety.GetNoise(coordX, coordZ) + 0.5, 1.5, 0);
 			double valTemp = (m_mapTemp.GetNoise(coordX, coordZ) + 1) / 2;
-			
+
+			int groundLevel =
+				INFLUENCE_MAJ * valMaj +
+				valVar * (
+					INFLUENCE_MED * valMed +
+					INFLUENCE_MIN * valMin);
 
 			for (int ay = 0; ay < CHUNKHEIGHT; ay++)
 			{
-				int groundLevel =
-					INFLUENCE_MAJ * valMaj +
-					valVar * (
-						INFLUENCE_MED * valMed +
-						INFLUENCE_MIN * valMin);
 
 				if (ay < groundLevel)
 				{
 					if (valVar > DESERTSTEP)
-						ids[m_xyzToIndex(ax, ay, az)] = 1;
+						ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASS0;
 					else
-						ids[m_xyzToIndex(ax, ay, az)] = 2;
+						ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASS1;
 				}
 				else if (ay < SEALEVEL)
 				{
-					ids[m_xyzToIndex(ax, ay, az)] = 3;
+					ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_WATER;
 				}
 				else
-					ids[m_xyzToIndex(ax, ay, az)] = 0;
-
-				//if(ax == 0)
-				//	ids[m_xyzToIndex(ax, ay, az)] = 0;
+					ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_AIR;
 			}
 		}
 	}
+
+	for (int az = 0; az < CHUNKWIDTH; az++)
+	{
+		for (int ax = 0; ax < CHUNKWIDTH; ax++)
+		{
+			double coordX = (double)(x * CHUNKWIDTH + ax) / 1000000;
+			double coordZ = (double)(z * CHUNKWIDTH + az) / 1000000;
+			double valMaj = m_clamp(m_mapHeightMaj.GetNoise(coordX, coordZ) + 0.5, 1.5, 0.02);
+			double valMed = m_clamp((m_mapHeightMed.GetNoise(coordX, coordZ) + 0.7) / 2, 1, 0);
+			double valMin = m_mapHeightMin.GetNoise(coordX, coordZ) + 0.5;
+			double valVar = m_clamp(m_mapVariety.GetNoise(coordX, coordZ) + 0.5, 1.5, 0);
+			double valTemp = (m_mapTemp.GetNoise(coordX, coordZ) + 1) / 2;
+
+			int groundLevel =
+				INFLUENCE_MAJ * valMaj +
+				valVar * (
+					INFLUENCE_MED * valMed +
+					INFLUENCE_MIN * valMin);
+
+			if (ax == 0 && az == 0)
+			{
+				Structure* structure = m_structures[0];
+				for (int i = 0; i < structure->length; i < i++)
+				{
+					ids[m_xyzToIndex(ax + structure->offsets[i].x, groundLevel + structure->offsets[i].y, az + structure->offsets[i].z)] = structure->ids[i];
+				}
+			}
+
+		}
+	}
+
+	delete(m_chunks[m_mod(x, BUFFERWIDTH) + BUFFERWIDTH * m_mod(z, BUFFERWIDTH)]);
 
 	Chunk* chunk = new Chunk(ids, glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z));
 	m_chunks[m_mod(x, BUFFERWIDTH) + BUFFERWIDTH * m_mod(z, BUFFERWIDTH)] = chunk;
@@ -277,7 +310,7 @@ Chunk* ChunkManager::GenerateChunk(int x, int z)
 
 bool ChunkManager::isTransparent(int idOther, int idThis)
 {
-	if (idOther != idThis && (idOther == 0 || idOther == 3))
+	if (idOther != idThis && (idOther == Blocks::BLOCK_AIR || idOther == Blocks::BLOCK_WATER))
 		return true;
 	else
 		return false;

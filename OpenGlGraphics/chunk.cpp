@@ -14,7 +14,7 @@ Chunk::Chunk(char* ids, glm::vec3 chunkRoot)
 
 Chunk::~Chunk()
 {
-	delete(blockIDs);
+	delete[](blockIDs);
 }
 
 /*

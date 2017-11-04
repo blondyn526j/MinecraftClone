@@ -5,6 +5,7 @@
 #include "blocks.h"
 #include "display.h"
 #include "FastNoise.h"
+#include "structures.h"
 
 #include <iostream>
 #include <fstream>
@@ -16,7 +17,7 @@
 class ChunkManager
 {
 public:
-	ChunkManager(Shader* shader, Transform* transform, Blocks* blocks, Display* display);
+	ChunkManager(Blocks* blocks, Display* display);
 	virtual ~ChunkManager();
 	void LoadChunkFromFile(int x, int z);
 	void LoadWorld();
@@ -27,8 +28,8 @@ public:
 private:
 	//Chunk* m_chunk;
 	void DrawChunk(int ax, int az);
-	Shader* m_shader;
-	Transform* m_transform;
+	//Shader* m_shader;
+	//Transform* m_transform;
 	Blocks* m_blocks;
 	Display* m_display;
 	std::vector<Chunk*> m_chunks;
@@ -41,5 +42,6 @@ private:
 	FastNoise m_mapVariety;
 
 	bool isTransparent(int idOther, int idThis);
+	Structures m_structures;
 };
 

@@ -1,7 +1,7 @@
 #include "blocks.h"
 #include <iostream>
 
-Blocks::Blocks(Display* display, int numBlocks)
+Blocks::Blocks(int numBlocks)
 {
 	m_meshes.reserve(numBlocks);
 	for (int i = 0; i < numBlocks; i++)

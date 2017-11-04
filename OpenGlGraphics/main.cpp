@@ -25,7 +25,7 @@
 bool isClosed = false;
 Display display(WIDTH, HEIGHT, "Hello Screen");
 Camera camera(glm::vec3(8.0f, 100.0, 8.0f), 80.0f, (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
-Blocks blocks(&display, 3);
+Blocks blocks(4);
 Input input(&isClosed);
 
 Shader shader("./res/basicShader");
@@ -34,7 +34,7 @@ Shader waveShader("./res/waveShader");
 Texture texture("./res/Texture.jpg");
 Transform transform;
 
-ChunkManager chunkManager(&shader, &transform, &blocks, &display);
+ChunkManager chunkManager(&blocks, &display);
 
 int main(int argc, char** argv)
 {
@@ -70,7 +70,6 @@ int main(int argc, char** argv)
 
 		//RAYCAST TEST END
 
-		display.Clear(0.7f, 0.9f, 0.98f, 1.0f);
 		shader.Bind();
 		texture.Bind(0);
 

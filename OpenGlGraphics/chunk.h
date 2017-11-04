@@ -17,18 +17,10 @@ public:
 	int chunkSize = 8;
 	Chunk(char* ids, glm::vec3 chunkRoot);
 	virtual ~Chunk();
-
-	//void DrawChunk();
-	//void UpdateVisibility();
 	
 	char* blockIDs;
 
 	glm::vec3 chunkRoot = glm::vec3(0, 0, 0);
 private:
-	//char* m_visiblilityArray;	//UP FRONT DOWN RIGHT BACK LEFT NULL NULL
-	/*Shader* m_shader;
-	Transform* m_transform;
-	Blocks* m_blocks;
-	Display* m_display;*/
 };
 
