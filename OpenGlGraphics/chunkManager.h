@@ -11,6 +11,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <thread>
 #include <glm/glm.hpp> 
 
 
@@ -28,6 +29,7 @@ public:
 private:
 	//Chunk* m_chunk;
 	void DrawChunk(int ax, int az);
+	void UpdateBuffer(int x, int z);
 	//Shader* m_shader;
 	//Transform* m_transform;
 	Blocks* m_blocks;
@@ -41,7 +43,10 @@ private:
 	FastNoise m_mapTemp;
 	FastNoise m_mapVariety;
 
+	std::thread loadingThread;
+
 	bool isTransparent(int idOther, int idThis);
 	Structures m_structures;
+	bool m_bufferNeedsToBeReAssigned = true;
 };
 

@@ -47,6 +47,7 @@ private:
 	std::vector<glm::vec3> positions[NUM_TYPES];
 	std::vector<glm::vec2> texCoords[NUM_TYPES];
 	int m_bufferedVertices[NUM_TYPES] = { 0, 0 };
+	int m_drawnVertices[NUM_TYPES] = { 0, 0 };
 	GLuint m_vertexArrayObject[NUM_TYPES];
 	GLuint m_vertexArrayBuffers[NUM_TYPES][NUM_BUFFERS];
 

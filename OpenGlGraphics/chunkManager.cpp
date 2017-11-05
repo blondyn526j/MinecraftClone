@@ -76,21 +76,37 @@ void ChunkManager::Draw(float x, float z)
 	{
 		m_display->ClearBuffer();
 
-		for (int a = xPos - DRAW_DISTANCE; a <= xPos + DRAW_DISTANCE; a++)
-			for (int b = zPos - DRAW_DISTANCE; b <= zPos + DRAW_DISTANCE; b++)
-				if (m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->chunkRoot != glm::vec3(CHUNKWIDTH * a, 0, CHUNKWIDTH * b))
-					LoadChunkFromFile(a, b);
+		if (loadingThread.joinable())
+			loadingThread.join();
+		
+		loadingThread = std::thread(&ChunkManager::UpdateBuffer, this, xPos, zPos);
+		//UpdateBuffer(xPos, zPos);
 
-		for (int a = xPos - DRAW_DISTANCE; a <= xPos + DRAW_DISTANCE; a++)
-			for (int b = zPos - DRAW_DISTANCE; b <= zPos + DRAW_DISTANCE; b++)
-			{
-				DrawChunk(a, b);
-			}
-
-		m_display->ReassignBuffer();
 		m_old_xPos = xPos;
 		m_old_zPos = zPos;
 	}
+
+	if (m_bufferNeedsToBeReAssigned)
+	{
+		m_display->ReassignBuffer();
+		m_bufferNeedsToBeReAssigned = false;
+	}
+}
+
+void ChunkManager::UpdateBuffer(int x, int z)
+{
+	for (int a = x - DRAW_DISTANCE; a <= x + DRAW_DISTANCE; a++)
+		for (int b = z - DRAW_DISTANCE; b <= z + DRAW_DISTANCE; b++)
+			if (m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->chunkRoot != glm::vec3(CHUNKWIDTH * a, 0, CHUNKWIDTH * b))
+				LoadChunkFromFile(a, b);
+
+	for (int a = x - DRAW_DISTANCE; a <= x + DRAW_DISTANCE; a++)
+		for (int b = z - DRAW_DISTANCE; b <= z + DRAW_DISTANCE; b++)
+		{
+			DrawChunk(a, b);
+		}
+
+	m_bufferNeedsToBeReAssigned = true;
 }
 
 void ChunkManager::DrawChunk(int ax, int az)

@@ -75,8 +75,8 @@ void Display::ClearBuffer()
 	for (int i = 0; i < NUM_TYPES; i++)
 	{
 		m_bufferedVertices[i] = 0;
-		positions[i].clear();
-		texCoords[i].clear();
+		//positions[i].clear();
+		//texCoords[i].clear();
 	}
 }
 
@@ -90,6 +90,7 @@ void Display::ReassignBuffer()
 		glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[i][TEXCOORD_VB]);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec2) * m_bufferedVertices[i], &(texCoords[i][0]));
 
+		m_drawnVertices[i] = m_bufferedVertices[i];
 	}
 }
 
@@ -111,7 +112,7 @@ void Display::InitializeBuffer()
 
 		glGenBuffers(NUM_BUFFERS, m_vertexArrayBuffers[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[i][POSITION_VB]);
-		glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(glm::vec3), NULL, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(glm::vec3), NULL, GL_STREAM_DRAW);
 
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -120,7 +121,7 @@ void Display::InitializeBuffer()
 
 		//glGenBuffers(NUM_BUFFERS, m_vertexArrayBuffers);
 		glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[i][TEXCOORD_VB]);
-		glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(glm::vec2), NULL, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(glm::vec2), NULL, GL_STREAM_DRAW);
 
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -134,17 +135,18 @@ void Display::AppendToDrawBuffer(Vertex* vertices, int numVertices, glm::vec3* o
 {
 	for (int i = 0; i < numVertices; i++)
 	{
-		positions[type].push_back(vertices[i].pos + *offset);
-		texCoords[type].push_back(vertices[i].texCoord);
+		positions[type][m_bufferedVertices[type]] = vertices[i].pos + *offset;
+		texCoords[type][m_bufferedVertices[type]] = vertices[i].texCoord;
+		m_bufferedVertices[type]++;
 	}
-	m_bufferedVertices[type] += numVertices;
+	//m_bufferedVertices[type] += numVertices;
 }
 
 void Display::DrawBuffer(int type)
 {
 	glBindVertexArray(m_vertexArrayObject[type]);
 
-	glDrawArrays(GL_TRIANGLES, 0, m_bufferedVertices[type]);
+	glDrawArrays(GL_TRIANGLES, 0, m_drawnVertices[type]);
 
 	glBindVertexArray(0);
 }
