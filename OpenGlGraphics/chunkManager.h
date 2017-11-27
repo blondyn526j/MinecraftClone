@@ -8,6 +8,7 @@
 #include "structures.h"
 
 #include <iostream>
+#include <random>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -30,6 +31,8 @@ private:
 	//Chunk* m_chunk;
 	void DrawChunk(int ax, int az);
 	void UpdateBuffer(int x, int z);
+	void GenerateStructure(int type, int x, int y, int z);
+	void GenerateTrees(int x, int z);
 	//Shader* m_shader;
 	//Transform* m_transform;
 	Blocks* m_blocks;
@@ -40,10 +43,14 @@ private:
 	FastNoise m_mapHeightMin;
 	FastNoise m_mapHeightMed;
 	FastNoise m_mapHeightMaj;
+	FastNoise m_mapHeightContinental;
+
 	FastNoise m_mapTemp;
 	FastNoise m_mapVariety;
+	FastNoise m_mapSandArea;
+	FastNoise m_mapBeachHeight;
 
-	std::thread loadingThread;
+	std::thread m_loadingThread;
 
 	bool isTransparent(int idOther, int idThis);
 	Structures m_structures;

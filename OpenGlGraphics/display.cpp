@@ -48,7 +48,6 @@ Display::Display(int width, int height, const std::string& title)
 	//glFogfv(GL_FOG_START, &fogStart);
 	//glFogfv(GL_FOG_START, &fogEnd);
 
-
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 }
 
@@ -90,7 +89,7 @@ void Display::ReassignBuffer()
 		glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[i][TEXCOORD_VB]);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec2) * m_bufferedVertices[i], &(texCoords[i][0]));
 
-		m_drawnVertices[i] = m_bufferedVertices[i];
+		m_drawnVertices[i] = m_bufferedVertices[i]; 
 	}
 }
 
@@ -139,7 +138,6 @@ void Display::AppendToDrawBuffer(Vertex* vertices, int numVertices, glm::vec3* o
 		texCoords[type][m_bufferedVertices[type]] = vertices[i].texCoord;
 		m_bufferedVertices[type]++;
 	}
-	//m_bufferedVertices[type] += numVertices;
 }
 
 void Display::DrawBuffer(int type)

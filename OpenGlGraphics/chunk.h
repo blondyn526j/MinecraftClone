@@ -15,6 +15,7 @@ class Chunk
 {
 public:
 	int chunkSize = 8;
+	bool treesGenerated = false;
 	Chunk(char* ids, glm::vec3 chunkRoot);
 	virtual ~Chunk();
 	

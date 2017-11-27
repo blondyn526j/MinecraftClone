@@ -1,11 +1,12 @@
 #include "chunkManager.h"
-#define DRAW_DISTANCE 9
+#define DRAW_DISTANCE 8
 #define BUFFERWIDTH 22
 #define SEALEVEL 55
 #define DESERTSTEP 0.5
 
-#define INFLUENCE_MAJ 160
-#define INFLUENCE_MED 90
+#define INFLUENCE_CONTINENTAL 120
+#define INFLUENCE_MAJ 80
+#define INFLUENCE_MED 70
 #define INFLUENCE_MIN 1.5
 
 int m_mod(const int b, const int a)
@@ -33,8 +34,13 @@ ChunkManager::ChunkManager(Blocks* blocks, Display* display)
 	for (int i = 0; i < BUFFERWIDTH * BUFFERWIDTH; i++)
 		m_chunks.push_back(nullptr);
 
-	m_mapHeightMaj.SetNoiseType(FastNoise::PerlinFractal);
-	m_mapHeightMaj.SetFrequency(1500);
+	m_mapHeightContinental.SetNoiseType(FastNoise::Perlin);
+	m_mapHeightContinental.SetFrequency(1000);
+	m_mapHeightContinental.SetInterp(FastNoise::Hermite);
+	m_mapHeightContinental.SetSeed(1075434);
+
+	m_mapHeightMaj.SetNoiseType(FastNoise::Perlin);
+	m_mapHeightMaj.SetFrequency(8000);
 	m_mapHeightMaj.SetInterp(FastNoise::Hermite);
 	m_mapHeightMaj.SetSeed(108134);
 
@@ -48,8 +54,8 @@ ChunkManager::ChunkManager(Blocks* blocks, Display* display)
 	m_mapHeightMin.SetInterp(FastNoise::Hermite);
 	m_mapHeightMin.SetSeed(626685);
 
-	m_mapTemp.SetNoiseType(FastNoise::Perlin);
-	m_mapTemp.SetFrequency(7000);
+	m_mapTemp.SetNoiseType(FastNoise::PerlinFractal);
+	m_mapTemp.SetFrequency(2000);
 	m_mapTemp.SetInterp(FastNoise::Hermite);
 	m_mapTemp.SetSeed(626685);
 
@@ -58,6 +64,18 @@ ChunkManager::ChunkManager(Blocks* blocks, Display* display)
 	m_mapVariety.SetInterp(FastNoise::Hermite);
 	m_mapVariety.SetSeed(80465);
 
+	m_mapSandArea.SetNoiseType(FastNoise::PerlinFractal);
+	m_mapSandArea.SetFrequency(3000);
+	m_mapSandArea.SetInterp(FastNoise::Hermite);
+	m_mapSandArea.SetSeed(73651);
+	m_mapSandArea.SetFractalOctaves(5);
+
+	m_mapBeachHeight.SetNoiseType(FastNoise::Perlin);
+	m_mapBeachHeight.SetFrequency(18000);
+	m_mapBeachHeight.SetInterp(FastNoise::Hermite);
+	m_mapBeachHeight.SetSeed(761651);
+
+	srand(624610);
 }
 
 ChunkManager::~ChunkManager()
@@ -76,10 +94,10 @@ void ChunkManager::Draw(float x, float z)
 	{
 		m_display->ClearBuffer();
 
-		if (loadingThread.joinable())
-			loadingThread.join();
-		
-		loadingThread = std::thread(&ChunkManager::UpdateBuffer, this, xPos, zPos);
+		if (m_loadingThread.joinable())
+			m_loadingThread.join();
+
+		m_loadingThread = std::thread(&ChunkManager::UpdateBuffer, this, xPos, zPos);
 		//UpdateBuffer(xPos, zPos);
 
 		m_old_xPos = xPos;
@@ -247,35 +265,62 @@ void ChunkManager::SaveChunkToFile(int x, int z, Chunk* chunk)
 
 Chunk* ChunkManager::GenerateChunk(int x, int z)
 {
-	char* ids = new char[CHUNKSIZE];
-
+	char* ids = new char[CHUNKSIZE + 1];
 	for (int az = 0; az < CHUNKWIDTH; az++)
 	{
 		for (int ax = 0; ax < CHUNKWIDTH; ax++)
 		{
 			double coordX = (double)(x * CHUNKWIDTH + ax) / 1000000;
 			double coordZ = (double)(z * CHUNKWIDTH + az) / 1000000;
-			double valMaj = m_clamp(m_mapHeightMaj.GetNoise(coordX, coordZ) + 0.5, 1.5, 0.02);
-			double valMed = m_clamp((m_mapHeightMed.GetNoise(coordX, coordZ) + 0.7) / 2, 1, 0);
+			double valContinental = m_clamp(m_mapHeightContinental.GetNoise(coordX, coordZ) + 0.5, 1, 0.02);
+			double valMaj = m_clamp(m_mapHeightMaj.GetNoise(coordX, coordZ) + 0.5, 1, 0.02);
+			double valMed = m_clamp((m_mapHeightMed.GetNoise(coordX, coordZ) + 0.5) / 2, 1, 0);
 			double valMin = m_mapHeightMin.GetNoise(coordX, coordZ) + 0.5;
 			double valVar = m_clamp(m_mapVariety.GetNoise(coordX, coordZ) + 0.5, 1.5, 0);
 			double valTemp = (m_mapTemp.GetNoise(coordX, coordZ) + 1) / 2;
-
+			double valSandArea = m_mapSandArea.GetNoise(coordX, coordZ);
+			double valBeachHeight = m_mapBeachHeight.GetNoise(coordX, coordZ);
+			
 			int groundLevel =
-				INFLUENCE_MAJ * valMaj +
+				INFLUENCE_CONTINENTAL * valContinental +
+				
 				valVar * (
+					INFLUENCE_MAJ * valMaj +
 					INFLUENCE_MED * valMed +
 					INFLUENCE_MIN * valMin);
 
+
 			for (int ay = 0; ay < CHUNKHEIGHT; ay++)
 			{
-
 				if (ay < groundLevel)
 				{
-					if (valVar > DESERTSTEP)
+					if(valTemp < 0.4)
+						ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASSC;
+					else if (valTemp < 0.6)
 						ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASS0;
 					else
-						ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASS1;
+						ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_SAND0;
+
+					/*if (ay < SEALEVEL + 2 + valBeachHeight * 4)
+					{
+						double sandRand = (double)(rand() % 200 - 100) * 0.0003;
+						if(valSandArea > 0.03)
+							ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_SAND0;
+						else if(valSandArea < -0.03)
+							ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASS0;
+						else if(sandRand < valSandArea)
+							ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_SAND0;
+						else
+							ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASS0;
+					}
+					else
+					{
+						if (valVar > DESERTSTEP)
+							ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASS0;
+						else
+							ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASS1;
+					}*/
+
 				}
 				else if (ay < SEALEVEL)
 				{
@@ -287,6 +332,7 @@ Chunk* ChunkManager::GenerateChunk(int x, int z)
 		}
 	}
 
+	/*
 	for (int az = 0; az < CHUNKWIDTH; az++)
 	{
 		for (int ax = 0; ax < CHUNKWIDTH; ax++)
@@ -315,13 +361,29 @@ Chunk* ChunkManager::GenerateChunk(int x, int z)
 			}
 
 		}
-	}
+	}*/
+
+	ids[CHUNKSIZE] = 0;
 
 	delete(m_chunks[m_mod(x, BUFFERWIDTH) + BUFFERWIDTH * m_mod(z, BUFFERWIDTH)]);
 
 	Chunk* chunk = new Chunk(ids, glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z));
 	m_chunks[m_mod(x, BUFFERWIDTH) + BUFFERWIDTH * m_mod(z, BUFFERWIDTH)] = chunk;
 	return chunk;
+}
+
+void ChunkManager::GenerateTrees(int x, int z)
+{
+	if (m_chunks[m_mod(x, BUFFERWIDTH) + m_mod(z, BUFFERWIDTH) * BUFFERWIDTH] == 0 &&
+		m_chunks[m_mod(x, BUFFERWIDTH) + m_mod(z, BUFFERWIDTH) * BUFFERWIDTH]->chunkRoot != glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z))
+	{
+
+	}
+}
+
+void ChunkManager::GenerateStructure(int type, int x, int y, int z)
+{
+
 }
 
 bool ChunkManager::isTransparent(int idOther, int idThis)
