@@ -18,6 +18,7 @@ SRCS = \
 	glut_bitmap.c \
 	glut_bwidth.c \
 	glut_cindex.c \
+	glut_cmap.c \
 	glut_cursor.c \
 	glut_dials.c \
 	glut_dstr.c \
@@ -39,6 +40,7 @@ SRCS = \
 	glut_shapes.c \
 	glut_space.c \
 	glut_stroke.c \
+	glut_swap.c \
 	glut_swidth.c \
 	glut_tablet.c \
 	glut_teapot.c \
@@ -57,6 +59,7 @@ OBJS = \
 	glut_bitmap.o \
 	glut_bwidth.o \
 	glut_cindex.o \
+	glut_cmap.o \
 	glut_cursor.o \
 	glut_dials.o \
 	glut_dstr.o \
@@ -78,6 +81,7 @@ OBJS = \
 	glut_shapes.o \
 	glut_space.o \
 	glut_stroke.o \
+	glut_swap.o \
 	glut_swidth.o \
 	glut_tablet.o \
 	glut_teapot.o \

@@ -46,7 +46,9 @@ extern int menuinuse;
 static muiObject *newmuiobj(void)
 {
     muiObject *newobj = (muiObject *)malloc(sizeof(muiObject));
+    newobj->active = 0;
     newobj->enable = 1;
+    newobj->select = 0;
     newobj->locate = 0;
     newobj->visible = 1;
     newobj->callback = 0;
@@ -559,6 +561,8 @@ void muiHandleEvent(int event, int value, int x, int y)
 /* ARGSUSED2 */
 enum muiReturnValue buttonhandler(muiObject *obj, int event, int value, int x, int y)
 {
+    if (!muiGetEnable(obj) || !muiGetVisible(obj)) return MUI_NO_ACTION;
+
     switch (event) {
 	case MUI_DEVICE_DOWN:
 	    return MUI_NO_ACTION;
@@ -591,14 +595,16 @@ enum muiReturnValue buttonhandler(muiObject *obj, int event, int value, int x, i
 	    }
 	    if (obj->type == MUI_RADIOBUTTON || obj->type == MUI_TINYRADIOBUTTON) {
 		Button *b = (Button *)obj->object, *b1;
-		muiSetActive(obj, 1);
 		if (b->link) {
+		    muiSetActive(obj, 1);
 		    b1 = b->link;
 		    while (b1 != b) {
 			muiSetActive(b1->object, 0);
 			b1 = b1->link;
 		    }
-		}
+		} else {
+ 		    muiSetActive(obj, ( muiGetActive(obj) ? 0 : 1 ) );
+  		}
 	    }
 	    muiSetSelect(obj, 0);
 	    muiDrawObject(obj);

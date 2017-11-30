@@ -1,9 +1,10 @@
-#version 120
+#version 330
 
 varying vec2 texCoord0;
 
 attribute vec3 position;
 attribute vec2 texCoord;
+attribute vec3 normal;
 
 uniform mat4 transform;
 

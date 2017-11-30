@@ -9,6 +9,11 @@
 class Structure
 {
 public:
+	enum
+	{
+		TREE0
+	};
+
 	Structure(int lenght)
 	{
 		this->length = lenght;

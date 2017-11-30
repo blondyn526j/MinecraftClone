@@ -1,179 +1,78 @@
-#! smake
-#
-# Copyright (c) Mark J. Kilgard, 1995.
-#
-include $(ROOT)/usr/include/make/commondefs
+# Makefile for Win32
 
-# NOTE:  In my GLUT development tree, many of the C source files for
-# GLUT are generated.  For this reason, "make full_clobber" will remove
-# these generated C files, while "make clobber" will not.
+!include <win32.mak>
 
 TOP = ../..
 
-TARGETS = libglut.a
+SRCS = glut_8x13.c glut_9x15.c glut_bitmap.c glut_bwidth.c glut_cindex.c glut_cmap.c glut_cursor.c glut_dials.c glut_dstr.c glut_event.c glut_ext.c glut_fullscrn.c glut_get.c glut_hel10.c glut_hel12.c glut_hel18.c glut_init.c glut_input.c glut_mesa.c glut_modifier.c glut_mroman.c glut_overlay.c glut_roman.c glut_shapes.c glut_space.c glut_stroke.c glut_swap.c glut_swidth.c glut_tablet.c glut_teapot.c glut_tr10.c glut_tr24.c glut_util.c glut_vidresize.c glut_warp.c glut_win.c glut_winmisc.c win32_glx.c win32_menu.c win32_util.c win32_x11.c
 
-LN = ln -s
-MV = mv
-RM = -rm -rf
+all	: glutdll install
 
-HDRS = glutint.h glutstroke.h layerutil.h glutbitmap.h
+!include "$(TOP)/glutwin32.mak"
 
-SRCS = \
-	glut_bitmap.c \
-	glut_bwidth.c \
-	glut_cindex.c \
-	glut_cursor.c \
-	glut_dials.c \
-	glut_dstr.c \
-	glut_event.c \
-	glut_ext.c \
-	glut_fullscrn.c \
-	glut_get.c \
-	glut_init.c \
-	glut_input.c \
-	glut_menu.c \
-	glut_mesa.c \
-	glut_modifier.c \
-	glut_overlay.c \
-	glut_shapes.c \
-	glut_space.c \
-	glut_stroke.c \
-	glut_swidth.c \
-	glut_tablet.c \
-	glut_teapot.c \
-	glut_util.c \
-	glut_vidresize.c \
-	glut_warp.c \
-	glut_win.c \
-	glut_winmisc.c \
-	layerutil.c \
+glutdll	: $(GLUTDLL)
 
-SRCSSEMIGENS = \
-	glut_8x13.c \
-	glut_9x15.c \
-	glut_hel10.c \
-	glut_hel12.c \
-	glut_hel18.c \
-	glut_mroman.c \
-	glut_roman.c \
-	glut_tr10.c \
-	glut_tr24.c \
+CFLAGS = $(cvarsdll) $(CFLAGS)
+LFLAGS = $(dlllflags) $(LFLAGS)
 
-OBJS = $(SRCS:.c=.o) $(SRCSSEMIGENS:.c=.o)
-OTHERGENS = y.tab.c y.tab.h strokegen.c strokegen.h strokelex.c
-OTHERSRCS = strokegen.y strokelex.l stroke.h
-FONTS = Roman.stroke MonoRoman.stroke
+OBJS   = $(SRCS:.c=.obj)
+LIBS   = $(OPENGL) $(GLU) $(guilibsdll)
 
-# Uncomment the LCDEFS line below if you want to build a version of
-# libglut.a that avoids using the SGI "fast atoms" optimization
-# introduced in IRIX 6.3.  This optimization eliminates serveral X server
-# round-trips.  If you are building libglut.a on an IRIX 6.3 or later
-# machine and want a chance (no guarantees) that GLUT executables built
-# against your libglut.a will work on IRIX 6.2 machines, uncomment out
-# the LCDEFS line below.  Otherwise, you'll get a run-time message about
-# "attempted access to unresolvable symbol in XXX: _XSGIFastInternAtom"
-#LCDEFS = -DNO_FAST_ATOMS
+$(GLUTDLL)	: $(OBJS) glut.def
+	$(link) $(LFLAGS) -out:$(GLUTDLL) -def:glut.def $(OBJS) $(LIBS)
 
-LCOPTS = -I$(TOP)/include -fullwarn 
-LWOFF = ,813,852,827,826
-LDIRT = *~ $(OTHERGENS) strokegen *.bak hardcopy glutsrc.ps capturexfont *.pure dstr dstr.c *.gen
+install	: $(GLUTDLL)
+	@echo "copying GLUT dynamic link library to system directory..."
+	-copy $(GLUTDLL) $(DLLINSTALL)
+	@echo "copying GLUT header file to include directory..."
+	-copy ..\..\include\GL\glut.h $(INCLUDEINSTALL)
+	@echo "copying GLUT import library to library directory..."
+	-copy $(GLUTLIB) $(LIBINSTALL)
 
-default: $(TARGETS)
+.c.obj	:
+	$(cc)   $(CFLAGS) -I . $*.c
 
-sinclude ObjectType.mk
+win32_glx.obj: win32_glx.c win32_glx.h
+win32_x11.obj: win32_x11.c win32_x11.h
+win32_menu.obj: win32_menu.c glutint.h ..\..\include\GL\glut.h
+win32_util.obj: win32_util.c glutint.h
 
-$(SRCS) : $(HDRS)
+glut_mroman.obj: glut_mroman.c glutstroke.h glutint.h
+glut_roman.obj: glut_roman.c glutstroke.h glutint.h
+glut_hel12.obj: glut_hel12.c glutbitmap.h glutint.h
+glut_8x13.obj: glut_8x13.c glutbitmap.h glutint.h
+glut_hel18.obj: glut_hel18.c glutbitmap.h glutint.h
+glut_9x15.obj: glut_9x15.c glutbitmap.h glutint.h
+glut_tr10.obj: glut_tr10.c glutbitmap.h glutint.h
+glut_hel10.obj: glut_hel10.c glutbitmap.h glutint.h
+glut_tr24.obj: glut_tr24.c glutbitmap.h glutint.h
 
-libglut.a : $(OBJS)
-	$(RM) $@
-	$(AR) crl $@ $(OBJS)
+glut_bitmap.obj: glut_bitmap.c glutint.h ..\..\include\GL\glut.h
+glut_bwidth.obj: glut_bwidth.c glutint.h ..\..\include\GL\glut.h
+glut_cindex.obj: glut_cindex.c glutint.h ..\..\include\GL\glut.h
+glut_cmap.obj: glut_cmap.c glutint.h ..\..\include\GL\glut.h
+glut_cursor.obj: glut_cursor.c glutint.h ..\..\include\GL\glut.h
+glut_dials.obj: glut_dials.c glutint.h ..\..\include\GL\glut.h
+glut_dstr.obj: glut_dstr.c glutint.h ..\..\include\GL\glut.h
+glut_event.obj: glut_event.c glutint.h ..\..\include\GL\glut.h
+glut_ext.obj: glut_ext.c glutint.h ..\..\include\GL\glut.h
+glut_fullscrn.obj: glut_fullscrn.c glutint.h ..\..\include\GL\glut.h
+glut_get.obj: glut_get.c glutint.h ..\..\include\GL\glut.h
+glut_init.obj: glut_init.c glutint.h ..\..\include\GL\glut.h
+glut_input.obj: glut_input.c glutint.h ..\..\include\GL\glut.h
+glut_menu.obj: glut_menu.c glutint.h ..\..\include\GL\glut.h
+glut_mesa.obj: glut_mesa.c glutint.h ..\..\include\GL\glut.h
+glut_modifier.obj: glut_modifier.c glutint.h ..\..\include\GL\glut.h
+glut_overlay.obj: glut_overlay.c glutint.h ..\..\include\GL\glut.h
+glut_shapes.obj: glut_shapes.c glutint.h ..\..\include\GL\glut.h
+glut_space.obj: glut_space.c glutint.h ..\..\include\GL\glut.h
+glut_swap.obj: glut_swap.c glutint.h ..\..\include\GL\glut.h
+glut_swidth.obj: glut_swidth.c glutint.h ..\..\include\GL\glut.h
+glut_tablet.obj: glut_tablet.c glutint.h ..\..\include\GL\glut.h
+glut_teapot.obj: glut_teapot.c glutint.h ..\..\include\GL\glut.h
+glut_util.obj: glut_util.c glutint.h ..\..\include\GL\glut.h
+glut_vidresize.obj: glut_vidresize.c glutint.h ..\..\include\GL\glut.h
+glut_warp.obj: glut_warp.c glutint.h ..\..\include\GL\glut.h
+glut_win.obj: glut_win.c glutint.h ..\..\include\GL\glut.h
+glut_winmisc.obj: glut_winmisc.c glutint.h ..\..\include\GL\glut.h
 
-.ORDER : strokegen.h strokegen.c
-
-strokegen.h strokegen.c : strokegen.y
-	$(YACC) -d strokegen.y
-	$(MV) y.tab.c strokegen.c
-	$(MV) y.tab.h strokegen.h
-
-# avoid warnings when compiling lex generated code
-strokegen.o : strokegen.c
-	$(CC) $(CFLAGS) -woff 726,825,635,818,819,820,824,831,835,822,821,1167,1498,1116,1136,1174,1196,803 -c -MDupdate Makedepend strokegen.c
-
-strokelex.c : strokelex.l
-	$(LEX) strokelex.l
-	$(MV) lex.yy.c strokelex.c
-
-# avoid warnings when compiling lex generated code
-strokelex.o : strokelex.c
-	$(CC) $(CFLAGS) -woff 831,825,817,835,702,819,635,824,822,1167,1498,1110,1196,1174,803 -c -MDupdate Makedepend strokelex.c
-
-strokegen : strokegen.o strokelex.o
-	$(CC) -o $@ $(LDFLAGS) strokegen.o strokelex.o -ll
-
-capturexfont : capturexfont.o
-	$(CC) -o $@ $(LDFLAGS) capturexfont.o -lX11
-
-# glut_roman.c and glut_mroman.c are now checked in, but here are rules to generate them
-glut_roman.c.gen : Roman.stroke strokegen
-	./strokegen -s glutStrokeRoman < Roman.stroke > $@
-glut_mroman.c.gen : MonoRoman.stroke strokegen
-	./strokegen -s glutStrokeMonoRoman < MonoRoman.stroke > $@
-
-glutsrc.ps : $(SRCS)
-	$(RM) hardcopy
-	mkdir -p hardcopy
-	for i in $(SRCS) ;\
-	do \
-	  grep -v CENTRY $$i | grep -v INDENT- > hardcopy/$$i; \
-	done
-	cd hardcopy ; enscript -p ../$@ -G -2r `echo $(SRCS) | fmt -1 | sort`
-	$(RM) hardcopy
-
-# The bitmap files can be generated using capturexfont, but because
-# they require a connection to an X server and potentially different
-# X servers have different fonts, these generated files are part
-# of the GLUT distribution.
-
-9_BY_15 = -misc-fixed-medium-r-normal--15-140-75-75-C-90-iso8859-1
-8_BY_13 = -misc-fixed-medium-r-normal--13-120-75-75-C-80-iso8859-1
-TR10 = -adobe-times-medium-r-normal--10-100-75-75-p-54-iso8859-1
-TR24 = -adobe-times-medium-r-normal--24-240-75-75-p-124-iso8859-1
-HEL10 = -adobe-helvetica-medium-r-normal--10-100-75-75-p-56-iso8859-1
-HEL12 = -adobe-helvetica-medium-r-normal--12-120-75-75-p-67-iso8859-1
-HEL18 = -adobe-helvetica-medium-r-normal--18-180-75-75-p-98-iso8859-1
-
-semigens : capturexfont
-	./capturexfont $(9_BY_15) glutBitmap9By15 > glut_9x15.c.gen
-	./capturexfont $(8_BY_13) glutBitmap8By13 > glut_8x13.c.gen
-	./capturexfont $(TR10) glutBitmapTimesRoman10 > glut_tr10.c.gen
-	./capturexfont $(TR24) glutBitmapTimesRoman24 > glut_tr24.c.gen
-	./capturexfont $(HEL10) glutBitmapHelvetica10 > glut_hel10.c.gen
-	./capturexfont $(HEL12) glutBitmapHelvetica12 > glut_hel12.c.gen
-	./capturexfont $(HEL18) glutBitmapHelvetica18 > glut_hel18.c.gen
-
-# unused test rule for test building 16-bit font
-JIS = -jis-fixed-medium-r-normal--24-230-75-75-c-240-jisx0208.1983-0
-glut_jis.c : 
-	./capturexfont $(JIS) glutBitmapJis > $@
-
-sources: $(SRCS)
-
-symcheck: libglut.a
-	-nm -Bo libglut.a | grep -v ' d ' | grep -v ' T glut' | grep -v ' D glut' | grep -v ' U ' | grep -v ' T __glut' | grep -v ' t ' | grep -v ' b ' | grep -v ' D __glut' | grep -v ' B __glut'
-
-dstr.c: glut_dstr.c
-	ln -s glut_dstr.c $@
-
-dstr: dstr.c glut_util.o glut_ext.o
-	$(RM) $@
-	$(CC) -g -o $@ $(CFLAGS) -DTEST dstr.c glut_util.o glut_ext.o -lGLU -lGL -lXext -lX11 -lm
-
-./glut.h : glut.h
-./glutint.h : glutint.h
-./glutstroke.h : glutstroke.h
-./strokegen.h : strokegen.h
-./stroke.h : stroke.h
-./layerutil.h : layerutil.h
-strokelex.o: strokelex.c strokegen.h
-
-include $(COMMONRULES)

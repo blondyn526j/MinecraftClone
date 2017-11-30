@@ -1,4 +1,5 @@
-/* Copyright (c) Mark J. Kilgard, 1996.  */
+
+/* Copyright (c) Mark J. Kilgard, 1996, 1997.  */
 
 /* This program is freely distributable without licensing fees
    and is provided without guarantee or warrantee expressed or
@@ -190,13 +191,10 @@ getOverlayVisualInfoRGB(unsigned int mode)
      supports this practice (and it requires destination alpha which
      is typically optional and quite uncommon for overlay windows!). 
 
-     In practice, the choice of  transparent pixel value is typically 
-
-     "hardwired" into most graphics hardware to a single pixel value. 
-
+     In practice, the choice of  transparent pixel value is typically
+     "hardwired" into most graphics hardware to a single pixel value.
      SGI hardware uses true black (0,0,0) without regard for the
-     destination alpha.  This is far from ideal because true black (a 
-
+     destination alpha.  This is far from ideal because true black (a
      common color that is easy to accidently generate) can not be
      generated in an RGBA overlay. I am not sure what other vendors
      do.
@@ -208,8 +206,7 @@ getOverlayVisualInfoRGB(unsigned int mode)
      simply A alone) generates transparency.  The problem with this
      approach is that it forces programmers to avoid whatever
      arbitrary color various systems decide is transparent.  This is
-     a difficult burden to place on programmers that want to portably 
-
+     a difficult burden to place on programmers that want to portably
      make use of overlays.
 
      To actually support transparent RGBA overlays, there are really
@@ -220,8 +217,7 @@ getOverlayVisualInfoRGB(unsigned int mode)
      improve upon "true black" RGB transparency. 
 
      Or TWO: Provide a set of queriable "transparency types" (like
-     "true black" or "alpha == 0" or "true white" or even a queriable 
-
+     "true black" or "alpha == 0" or "true white" or even a queriable
      transparent color).  This is harder for programmers, OK for
      existing SGI hardware, and it leaves open the issue of what
      other modes are reasonable.
@@ -319,7 +315,8 @@ determineOverlayVisual(int *treatAsSingle, Bool * visAlloced)
     for (i = 1; i <= 3; i++) {
       requiredOverlayCriteria[0].value = i;
       vi = __glutDetermineVisualFromString(__glutDisplayString, treatAsSingle,
-        requiredOverlayCriteria, numRequiredOverlayCriteria, requiredOverlayCriteriaMask);
+        requiredOverlayCriteria, numRequiredOverlayCriteria,
+	requiredOverlayCriteriaMask);
       if (vi) {
         return vi;
       }
@@ -365,14 +362,19 @@ glutEstablishOverlay(void)
   }
   overlay->ctx = glXCreateContext(__glutDisplay, overlay->vis,
     None, __glutTryDirect);
+  if (!overlay->ctx) {
+    __glutFatalError(
+      "failed to create overlay OpenGL rendering context.");
+  }
+#if !defined(WIN32)
   overlay->isDirect = glXIsDirect(__glutDisplay, overlay->ctx);
   if (__glutForceDirect) {
     if (!overlay->isDirect) {
       __glutFatalError("direct rendering not possible.");
     }
   }
-  __glutSetupColormap(overlay->vis, &overlay->colormap, &overlay->cmap,
-    GLUT_WIND_IS_RGB(__glutDisplayMode));
+#endif
+  __glutSetupColormap(overlay->vis, &overlay->colormap, &overlay->cmap);
   overlay->transparentPixel = __glutGetTransparentPixel(__glutDisplay,
     overlay->vis);
   wa.colormap = overlay->cmap;
@@ -402,10 +404,17 @@ glutEstablishOverlay(void)
   /* Make sure a reshape gets delivered. */
   window->forceReshape = True;
 
+#if !defined(WIN32)
   __glutPutOnWorkList(__glutToplevelOf(window), GLUT_COLORMAP_WORK);
+#endif
 
   window->overlay = overlay;
   glutUseLayer(GLUT_OVERLAY);
+
+  if (overlay->treatAsSingle) {
+    glDrawBuffer(GL_FRONT);
+    glReadBuffer(GL_FRONT);
+  }
 }
 
 void APIENTRY 
@@ -424,7 +433,9 @@ glutRemoveOverlay(void)
   addStaleWindow(window, overlay->win);
   __glutFreeOverlay(overlay);
   window->overlay = NULL;
+#if !defined(WIN32)
   __glutPutOnWorkList(__glutToplevelOf(window), GLUT_COLORMAP_WORK);
+#endif
 }
 
 void APIENTRY 
@@ -455,6 +466,16 @@ void APIENTRY
 glutPostOverlayRedisplay(void)
 {
   __glutPostRedisplay(__glutCurrentWindow, GLUT_OVERLAY_REDISPLAY_WORK);
+}
+
+/* The advantage of this routine is that it saves the cost of a
+   glutSetWindow call (entailing an expensive OpenGL context switch),
+   particularly useful when multiple windows need redisplays posted at
+   the same times. */
+void APIENTRY
+glutPostWindowOverlayRedisplay(int win)
+{
+  __glutPostRedisplay(__glutWindowList[win - 1], GLUT_OVERLAY_REDISPLAY_WORK);
 }
 
 void APIENTRY 

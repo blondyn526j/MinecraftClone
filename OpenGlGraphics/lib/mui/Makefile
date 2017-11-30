@@ -1,32 +1,15 @@
-#! smake
-#
-# Copyright (c) Mark J. Kilgard, 1997.
-#
-include $(ROOT)/usr/include/make/commondefs
+# Makefile for Win32
+
+!include <win32.mak>
 
 TOP = ../..
 
-TARGETS = libmui.a
+SRCS = gizmo.c glutmui.c displaylist.c uicolor.c miscui.c mui.c vslider.c textlist.c button.c pulldown.c hslider.c
+OBJS = $(SRCS:.c=.obj)
 
-LN = ln -s
-MV = mv
-RM = -rm -rf
+all	: mui.lib
 
-LCOPTS = -I$(TOP)/include -fullwarn 
-LWOFF = ,813,852,827,826
-LDIRT = *~ *.bak
+!include "$(TOP)/glutwin32.mak"
 
-SRCS = gizmo.c glutmui.c displaylist.c uicolor.c miscui.c mui.c vslider.c \
-	 textlist.c button.c pulldown.c hslider.c
-
-OBJS = $(SRCS:.c=.o)
-
-default: $(TARGETS)
-
-sinclude ObjectType.mk
-
-libmui.a: $(OBJS)
-	$(RM) $@
-	$(AR) crl $@ $(OBJS)
-
-include $(COMMONRULES)
+mui.lib	: $(OBJS)
+	lib -out:mui.lib $(OBJS)

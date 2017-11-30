@@ -15,7 +15,6 @@
 #include <thread>
 #include <glm/glm.hpp> 
 
-
 class ChunkManager
 {
 public:
@@ -33,8 +32,7 @@ private:
 	void UpdateBuffer(int x, int z);
 	void GenerateStructure(int type, int x, int y, int z);
 	void GenerateTrees(int x, int z);
-	//Shader* m_shader;
-	//Transform* m_transform;
+	int GetGroudLevel(double x, double z); /*GLOBAL*/
 	Blocks* m_blocks;
 	Display* m_display;
 	std::vector<Chunk*> m_chunks;
@@ -55,5 +53,7 @@ private:
 	bool isTransparent(int idOther, int idThis);
 	Structures m_structures;
 	bool m_bufferNeedsToBeReAssigned = true;
+
+	char& m_xyzToBlock(int globalX, int globalY, int globalZ);
 };
 

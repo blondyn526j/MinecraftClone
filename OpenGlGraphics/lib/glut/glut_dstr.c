@@ -11,10 +11,8 @@
 #include <string.h>
 #include "glutint.h"
 
-/* glxcaps matches the criteria macros listed in glutint.h, but 
-
-   only list the first set (those that correspond to GLX visual 
-
+/* glxcaps matches the criteria macros listed in glutint.h, but
+   only list the first set (those that correspond to GLX visual
    attributes). */
 static int glxcap[NUM_GLXCAPS] =
 {
@@ -80,9 +78,9 @@ static int isMesaGLX = -1;
 static int
 determineMesaGLX(void)
 {
+#ifdef GLX_VERSION_1_1
   const char *vendor, *version, *ch;
 
-#ifdef GLX_VERSION_1_1
   vendor = glXGetClientString(__glutDisplay, GLX_VENDOR);
   if (!strcmp(vendor, "Brian Paul")) {
     version = glXGetClientString(__glutDisplay, GLX_VERSION);
@@ -98,8 +96,7 @@ determineMesaGLX(void)
 #else
   /* Recent versions for Mesa should support GLX 1.1 and
      therefore glXGetClientString.  If we get into this case,
-     we would be compiling against a true OpenGL not supporting 
-
+     we would be compiling against a true OpenGL not supporting
      GLX 1.1, and the resulting compiled library won't work
      well with Mesa then. */
 #endif
@@ -235,7 +232,15 @@ loadVisuals(int *nitems_return)
   XVisualInfo *vinfo, **vlist, template;
   FrameBufferMode *fbmodes, *mode;
   int n, i, j, rc, glcapable;
-  int multisample, visual_info, visual_rating;
+#if defined(GLX_VERSION_1_1) && defined(GLX_SGIS_multisample)
+  int multisample;
+#endif
+#if defined(GLX_VERSION_1_1) && defined(GLX_EXT_visual_info)
+  int visual_info;
+#endif
+#if defined(GLX_VERSION_1_1) && defined(GLX_EXT_visual_rating)
+  int visual_rating;
+#endif
 
   isMesaGLX = determineMesaGLX();
   if (isMesaGLX) {
@@ -267,9 +272,15 @@ loadVisuals(int *nitems_return)
     }
   }
 
+#if defined(GLX_VERSION_1_1) && defined(GLX_SGIS_multisample)
   multisample = __glutIsSupportedByGLX("GLX_SGIS_multisample");
+#endif
+#if defined(GLX_VERSION_1_1) && defined(GLX_EXT_visual_info)
   visual_info = __glutIsSupportedByGLX("GLX_EXT_visual_info");
+#endif
+#if defined(GLX_VERSION_1_1) && defined(GLX_EXT_visual_rating)
   visual_rating = __glutIsSupportedByGLX("GLX_EXT_visual_rating");
+#endif
 
   fbmodes = (FrameBufferMode *) malloc(n * sizeof(FrameBufferMode));
   if (fbmodes == NULL) {
@@ -329,6 +340,13 @@ loadVisuals(int *nitems_return)
       if (visual_rating) {
         int rating;
 
+/* babcock@cs.montana.edu reported that DEC UNIX (OSF1) V4.0 564 for
+   Alpha did not properly define GLX_VISUAL_CAVEAT_EXT in <GL/glx.h>
+   despite claiming to support GLX_EXT_visual_rating. */
+#ifndef GLX_VISUAL_CAVEAT_EXT
+#define GLX_VISUAL_CAVEAT_EXT 0x20
+#endif
+
         rc = glXGetConfig(__glutDisplay, vlist[i], GLX_VISUAL_CAVEAT_EXT, &rating);
         if (rc != 0) {
           mode->cap[SLOW] = 0;
@@ -368,6 +386,13 @@ loadVisuals(int *nitems_return)
 #if defined(GLX_VERSION_1_1) && defined(GLX_EXT_visual_info)
       if (visual_info) {
         int transparent;
+
+/* babcock@cs.montana.edu reported that DEC UNIX (OSF1) V4.0 564 for
+   Alpha did not properly define GLX_TRANSPARENT_TYPE_EXT in <GL/glx.h>
+   despite claiming to support GLX_EXT_visual_info. */
+#ifndef GLX_TRANSPARENT_TYPE_EXT
+#define GLX_TRANSPARENT_TYPE_EXT 0x23
+#endif
 
         rc = glXGetConfig(__glutDisplay, vlist[i], GLX_TRANSPARENT_TYPE_EXT, &transparent);
         if (rc != 0) {
@@ -598,9 +623,9 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
         criterion[0].comparison = comparator;
         criterion[0].value = value;
       }
-      *mask |= 1 << RGBA;
-      *mask |= 1 << ALPHA_SIZE;
-      *mask |= 1 << RGBA_MODE;
+      *mask |= (1 << RGBA);
+      *mask |= (1 << ALPHA_SIZE);
+      *mask |= (1 << RGBA_MODE);
       return 1;
     }
     acca = !strcmp(word, "acca");
@@ -625,7 +650,7 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
         criterion[i].comparison = comparator;
         criterion[i].value = value;
       }
-      *mask |= 1 << ACCUM_RED_SIZE;
+      *mask |= (1 << ACCUM_RED_SIZE);
       return 4;
     }
     if (!strcmp(word, "auxbufs")) {
@@ -637,7 +662,7 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
         criterion[0].comparison = comparator;
         criterion[0].value = value;
       }
-      *mask |= 1 << AUX_BUFFERS;
+      *mask |= (1 << AUX_BUFFERS);
       return 1;
     }
     return -1;
@@ -651,8 +676,8 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
         criterion[0].comparison = comparator;
         criterion[0].value = value;
       }
-      *mask |= 1 << RGBA;
-      *mask |= 1 << RGBA_MODE;
+      *mask |= (1 << RGBA);
+      *mask |= (1 << RGBA_MODE);
       return 1;
     }
     if (!strcmp(word, "buffer")) {
@@ -677,7 +702,7 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
         criterion[0].comparison = comparator;
         criterion[0].value = value;
       }
-      *mask |= 1 << CONFORMANT;
+      *mask |= (1 << CONFORMANT);
       return 1;
     }
     return -1;
@@ -691,7 +716,7 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
         criterion[0].comparison = comparator;
         criterion[0].value = value;
       }
-      *mask |= 1 << DEPTH_SIZE;
+      *mask |= (1 << DEPTH_SIZE);
       return 1;
     }
     if (!strcmp(word, "double")) {
@@ -703,7 +728,7 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
         criterion[0].comparison = comparator;
         criterion[0].value = value;
       }
-      *mask |= 1 << DOUBLEBUFFER;
+      *mask |= (1 << DOUBLEBUFFER);
       return 1;
     }
     return -1;
@@ -717,8 +742,8 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
         criterion[0].comparison = comparator;
         criterion[0].value = value;
       }
-      *mask |= 1 << RGBA;
-      *mask |= 1 << RGBA_MODE;
+      *mask |= (1 << RGBA);
+      *mask |= (1 << RGBA_MODE);
       return 1;
     }
     return -1;
@@ -727,8 +752,8 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
       criterion[0].capability = RGBA;
       criterion[0].comparison = EQ;
       criterion[0].value = 0;
-      *mask |= 1 << RGBA;
-      *mask |= 1 << CI_MODE;
+      *mask |= (1 << RGBA);
+      *mask |= (1 << CI_MODE);
       if (comparator == NONE) {
         criterion[1].capability = BUFFER_SIZE;
         criterion[1].comparison = GTE;
@@ -763,8 +788,8 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
         criterion[0].comparison = comparator;
         criterion[0].value = value;
       }
-      *mask |= 1 << RGBA;
-      *mask |= 1 << RGBA_MODE;
+      *mask |= (1 << RGBA);
+      *mask |= (1 << RGBA_MODE);
       return 1;
     }
     rgba = !strcmp(word, "rgba");
@@ -793,8 +818,8 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
         criterion[i].comparison = comparator;
         criterion[i].value = value;
       }
-      *mask |= 1 << RGBA;
-      *mask |= 1 << RGBA_MODE;
+      *mask |= (1 << RGBA);
+      *mask |= (1 << RGBA_MODE);
       return 5;
     }
     return -1;
@@ -808,7 +833,7 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
         criterion[0].comparison = comparator;
         criterion[0].value = value;
       }
-      *mask |= 1 << STENCIL_SIZE;
+      *mask |= (1 << STENCIL_SIZE);
       return 1;
     }
     if (!strcmp(word, "single")) {
@@ -817,7 +842,7 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
         criterion[0].comparison = EQ;
         criterion[0].value = 0;
         *allowDoubleAsSingle = True;
-        *mask |= 1 << DOUBLEBUFFER;
+        *mask |= (1 << DOUBLEBUFFER);
         return 1;
       } else {
         return -1;
@@ -832,7 +857,7 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
         criterion[0].comparison = comparator;
         criterion[0].value = value;
       }
-      *mask |= 1 << STEREO;
+      *mask |= (1 << STEREO);
       return 1;
     }
     if (!strcmp(word, "samples")) {
@@ -844,7 +869,7 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
         criterion[0].comparison = comparator;
         criterion[0].value = value;
       }
-      *mask |= 1 << SAMPLES;
+      *mask |= (1 << SAMPLES);
       return 1;
     }
     if (!strcmp(word, "slow")) {
@@ -859,7 +884,7 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
         criterion[0].comparison = comparator;
         criterion[0].value = value;
       }
-      *mask |= 1 << SLOW;
+      *mask |= (1 << SLOW);
       return 1;
     }
     return -1;
@@ -892,38 +917,38 @@ parseCriteria(char *word, Criterion * criterion, int *mask,
 
     if (!strcmp(word, "xstaticgray")) {
       criterion[0].capability = XSTATICGRAY;
-      *mask |= 1 << XSTATICGRAY;  /* Indicates _any_ visual
-                                     class selected. */
+      *mask |= (1 << XSTATICGRAY);  /* Indicates _any_ visual
+                                       class selected. */
       return 1;
     }
     if (!strcmp(word, "xgrayscale")) {
       criterion[0].capability = XGRAYSCALE;
-      *mask |= 1 << XSTATICGRAY;  /* Indicates _any_ visual
-                                     class selected. */
+      *mask |= (1 << XSTATICGRAY);  /* Indicates _any_ visual
+                                       class selected. */
       return 1;
     }
     if (!strcmp(word, "xstaticcolor")) {
       criterion[0].capability = XSTATICCOLOR;
-      *mask |= 1 << XSTATICGRAY;  /* Indicates _any_ visual
-                                     class selected. */
+      *mask |= (1 << XSTATICGRAY);  /* Indicates _any_ visual
+                                       class selected. */
       return 1;
     }
     if (!strcmp(word, "xpseudocolor")) {
       criterion[0].capability = XPSEUDOCOLOR;
-      *mask |= 1 << XSTATICGRAY;  /* Indicates _any_ visual
-                                     class selected. */
+      *mask |= (1 << XSTATICGRAY);  /* Indicates _any_ visual
+                                       class selected. */
       return 1;
     }
     if (!strcmp(word, "xtruecolor")) {
       criterion[0].capability = XTRUECOLOR;
-      *mask |= 1 << XSTATICGRAY;  /* Indicates _any_ visual
-                                     class selected. */
+      *mask |= (1 << XSTATICGRAY);  /* Indicates _any_ visual
+                                       class selected. */
       return 1;
     }
     if (!strcmp(word, "xdirectcolor")) {
       criterion[0].capability = XDIRECTCOLOR;
-      *mask |= 1 << XSTATICGRAY;  /* Indicates _any_ visual
-                                     class selected. */
+      *mask |= (1 << XSTATICGRAY);  /* Indicates _any_ visual
+                                       class selected. */
       return 1;
     }
     return -1;
@@ -942,7 +967,7 @@ parseModeString(char *mode, int *ncriteria, Bool * allowDoubleAsSingle,
   char *copy, *word;
 
   *allowDoubleAsSingle = False;
-  copy = strdup(mode);
+  copy = __glutStrdup(mode);
   /* Attempt to estimate how many criteria entries should be
      needed. */
   n = 0;
@@ -999,7 +1024,7 @@ parseModeString(char *mode, int *ncriteria, Bool * allowDoubleAsSingle,
         criteria[n].comparison = MIN;
         criteria[n].value = 0;
         n++;
-        mask |= 1 << CONFORMANT;
+        mask |= (1 << CONFORMANT);
       }
     }
   }
@@ -1068,7 +1093,7 @@ parseModeString(char *mode, int *ncriteria, Bool * allowDoubleAsSingle,
     criteria[n + 4].comparison = MIN;
     criteria[n + 4].value = 0;
     n += 5;
-    mask |= 1 << RGBA_MODE;
+    mask |= (1 << RGBA_MODE);
   }
 #if !defined(WIN32)
   if (!(mask & (1 << XSTATICGRAY))) {
@@ -1190,7 +1215,7 @@ getVisualInfoFromString(char *string, Bool * treatAsSingle,
 
   if (visinfo) {
 #if defined(WIN32)
-    /* we could have a valid pixel format for drawing to a bitmap.
+    /* We could have a valid pixel format for drawing to a bitmap.
        However, we don't want to draw into a bitmap, we need one that
        can be used with a window, so make sure that this is true. */
     if (!(visinfo->dwFlags & PFD_DRAW_TO_WINDOW))
@@ -1215,7 +1240,7 @@ glutInitDisplayString(const char *string)
     free(__glutDisplayString);
   }
   if (string) {
-    __glutDisplayString = strdup(string);
+    __glutDisplayString = __glutStrdup(string);
     if (!__glutDisplayString)
       __glutFatalError("out of memory.");
   } else

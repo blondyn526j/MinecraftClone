@@ -1,11 +1,15 @@
 #ifndef __glutint_h__
 #define __glutint_h__
 
-/* Copyright (c) Mark J. Kilgard, 1994. */
+/* Copyright (c) Mark J. Kilgard, 1994, 1997. */
 
 /* This program is freely distributable without licensing fees 
    and is provided without guarantee or warrantee expressed or 
    implied. This program is -not- in the public domain. */
+
+#if defined(__CYGWIN32__)
+#include <sys/time.h>
+#endif
 
 #if defined(WIN32)
 #include "glutwin32.h"
@@ -134,25 +138,25 @@ extern int sys$gettim(struct timeval *);
 #define ACCUM_ALPHA_SIZE        14
 #define LEVEL                   15
 
-#define NUM_GLXCAPS             LEVEL + 1
+#define NUM_GLXCAPS             (LEVEL + 1)
 
-#define XVISUAL                 NUM_GLXCAPS + 0
-#define TRANSPARENT             NUM_GLXCAPS + 1
-#define SAMPLES                 NUM_GLXCAPS + 2
-#define XSTATICGRAY             NUM_GLXCAPS + 3  /* Used as
-                                                    mask bit
-                                                    for "any
-                                                    visual type 
-                                                    selected". */
-#define XGRAYSCALE              NUM_GLXCAPS + 4
-#define XSTATICCOLOR            NUM_GLXCAPS + 5
-#define XPSEUDOCOLOR            NUM_GLXCAPS + 6
-#define XTRUECOLOR              NUM_GLXCAPS + 7
-#define XDIRECTCOLOR            NUM_GLXCAPS + 8
-#define SLOW                    NUM_GLXCAPS + 9
-#define CONFORMANT              NUM_GLXCAPS + 10
+#define XVISUAL                 (NUM_GLXCAPS + 0)
+#define TRANSPARENT             (NUM_GLXCAPS + 1)
+#define SAMPLES                 (NUM_GLXCAPS + 2)
+#define XSTATICGRAY             (NUM_GLXCAPS + 3)  /* Used as
+                                                      mask bit
+                                                      for "any
+                                                      visual type 
+                                                      selected". */
+#define XGRAYSCALE              (NUM_GLXCAPS + 4)
+#define XSTATICCOLOR            (NUM_GLXCAPS + 5)
+#define XPSEUDOCOLOR            (NUM_GLXCAPS + 6)
+#define XTRUECOLOR              (NUM_GLXCAPS + 7)
+#define XDIRECTCOLOR            (NUM_GLXCAPS + 8)
+#define SLOW                    (NUM_GLXCAPS + 9)
+#define CONFORMANT              (NUM_GLXCAPS + 10)
 
-#define NUM_CAPS                NUM_GLXCAPS + 11
+#define NUM_CAPS                (NUM_GLXCAPS + 11)
 
 /* Frame buffer capablities that don't have a corresponding
    FrameBufferMode entry.  These get used as mask bits. */
@@ -287,7 +291,9 @@ struct _GLUTwindow {
   Bool treatAsSingle;   /* treat this window as single-buffered
                            (it might be "fake" though) */
   Bool forceReshape;    /* force reshape before display */
-  Bool isDirect;        /* if direct context */
+#if !defined(WIN32)
+  Bool isDirect;        /* if direct context (X11 only) */
+#endif
   Bool usedSwapBuffers; /* if swap buffers used last display */
   long eventMask;       /* mask of X events selected for */
   int buttonUses;       /* number of button uses, ref cnt */
@@ -367,7 +373,9 @@ struct _GLUToverlay {
   GLUTcolormap *colormap;  /* colormap; NULL if RGBA */
   int shownState;       /* if overlay window mapped */
   Bool treatAsSingle;   /* treat as single-buffered */
+#if !defined(WIN32)
   Bool isDirect;        /* if direct context */
+#endif
   int transparentPixel; /* transparent pixel value */
   GLUTdisplayCB display;  /* redraw  */
   /* Special Fortran display  unneeded since no
@@ -382,6 +390,7 @@ struct _GLUTstale {
 };
 
 extern GLUTstale *__glutStaleWindowList;
+
 #define GLUT_OVERLAY_EVENT_FILTER_MASK \
   (ExposureMask | \
   StructureNotifyMask | \
@@ -399,6 +408,7 @@ extern GLUTstale *__glutStaleWindowList;
 #define GLUT_HACK_STOP_PROPAGATE_MASK \
   (KeyPressMask | \
   KeyReleaseMask)
+
 typedef struct _GLUTmenu GLUTmenu;
 typedef struct _GLUTmenuItem GLUTmenuItem;
 struct _GLUTmenu {
@@ -407,10 +417,13 @@ struct _GLUTmenu {
   GLUTselectCB select;  /*  function of menu */
   GLUTmenuItem *list;   /* list of menu entries */
   int num;              /* number of entries */
+#if !defined(WIN32)
   Bool managed;         /* are the InputOnly windows size
                            validated? */
-  int pixwidth;         /* width of menu in pixels */
+  Bool searched;	/* help detect menu loops */
   int pixheight;        /* height of menu in pixels */
+  int pixwidth;         /* width of menu in pixels */
+#endif
   int submenus;         /* number of submenu entries */
   GLUTmenuItem *highlighted;  /* pointer to highlighted menu
                                  entry, NULL not highlighted */
@@ -433,9 +446,9 @@ struct _GLUTmenuItem {
                            entry; doubles as submenu id
                            (0-base) if submenu trigger */
 #if defined(WIN32)
-  int unique;           /* unique menu item id (WIN32) */
+  UINT unique;          /* unique menu item id (Win32 only) */
 #endif
-  char *label;          /* strdup'ed label string */
+  char *label;          /* __glutStrdup'ed label string */
   int len;              /* length of label string */
   int pixwidth;         /* width of X window in pixels */
   GLUTmenuItem *next;   /* next menu entry on list for menu */
@@ -528,8 +541,19 @@ extern XVisualInfo *__glutDetermineWindowVisual(Bool * treatAsSingle,
 extern int __glutMesaSwapHackSupport;
 
 /* private routines from glut_cindex.c */
-extern GLUTcolormap *__glutAssociateColormap(XVisualInfo * vis);
+extern GLUTcolormap * __glutAssociateNewColormap(XVisualInfo * vis);
 extern void __glutFreeColormap(GLUTcolormap *);
+
+/* private routines from glut_cmap.c */
+extern void __glutSetupColormap(
+  XVisualInfo * vi,
+  GLUTcolormap ** colormap,
+  Colormap * cmap);
+#if !defined(WIN32)
+extern void __glutEstablishColormapsProperty(
+  GLUTwindow * window);
+extern GLUTwindow *__glutToplevelOf(GLUTwindow * window);
+#endif
 
 /* private routines from glut_event.c */
 extern void (*__glutUpdateInputDeviceMaskFunc) (GLUTwindow *);
@@ -560,16 +584,14 @@ extern void __glutStartMenu(GLUTmenu * menu,
   GLUTwindow * window, int x, int y, int x_win, int y_win);
 
 /* private routines from glut_util.c */
+extern char * __glutStrdup(const char *string);
 extern void __glutWarning(char *format,...);
 extern void __glutFatalError(char *format,...);
 extern void __glutFatalUsage(char *format,...);
 
 /* private routines from glut_win.c */
 extern GLUTwindow *__glutGetWindow(Window win);
-extern GLUTwindow *__glutToplevelOf(GLUTwindow * window);
 extern void __glutChangeWindowEventMask(long mask, Bool add);
-extern void __glutEstablishColormapsProperty(
-  GLUTwindow * window);
 extern XVisualInfo *__glutDetermineVisual(
   unsigned int mode,
   Bool * fakeSingle,
@@ -579,11 +601,6 @@ extern void __glutSetWindow(GLUTwindow * window);
 extern void __glutReshapeFunc(GLUTreshapeCB reshapeFunc,
   int callingConvention);
 extern void  __glutDefaultReshape(int, int);
-extern void __glutSetupColormap(
-  XVisualInfo * vi,
-  GLUTcolormap ** colormap,
-  Colormap * cmap,
-  int isRGB);
 extern GLUTwindow *__glutCreateWindow(
   GLUTwindow * parent,
   int x, int y, int width, int height);

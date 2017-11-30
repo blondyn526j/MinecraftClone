@@ -1,4 +1,5 @@
-/* Copyright (c) Mark J. Kilgard, 1994. */
+
+/* Copyright (c) Mark J. Kilgard, 1994, 1997. */
 
 /* This program is freely distributable without licensing fees
    and is provided without guarantee or warrantee expressed or
@@ -47,26 +48,9 @@ int __glutInitX = -1, __glutInitY = -1;
 GLboolean __glutForceDirect = GL_FALSE,
   __glutTryDirect = GL_TRUE;
 Atom __glutWMDeleteWindow;
-#if defined(WIN32)
-int __glutMinWindowWidth, __glutMinWindowHeight;
-#endif
 /* *INDENT-ON* */
 
 static Bool synchronize = False;
-
-#if defined(__vms)
-char *
-strdup(const char *string)
-{
-  char *new;
-
-  new = malloc(strlen(string) + 1);
-  if (new == NULL)
-    return NULL;
-  strcpy(new, string);
-  return new;
-}
-#endif
 
 #if defined(WIN32)
 void
@@ -76,13 +60,13 @@ __glutOpenWin32Connection(char* display)
   WNDCLASS  wc;
   HINSTANCE hInstance = GetModuleHandle(NULL);
   
-  /* make sure we register the window only once */
+  /* Make sure we register the window only once. */
   if(classname)
     return;
 
   classname = "GLUT";
 
-  /* clear (important!) and then fill in the window class structure */
+  /* Clear (important!) and then fill in the window class structure. */
   memset(&wc, 0, sizeof(WNDCLASS));
   wc.style         = CS_OWNDC;
   wc.lpfnWndProc   = (WNDPROC)__glutWindowProc;
@@ -93,7 +77,7 @@ __glutOpenWin32Connection(char* display)
   wc.lpszMenuName  = NULL;
   wc.lpszClassName = classname;
 
-  /* fill in a default icon if one isn't specified as a resource */
+  /* Fill in a default icon if one isn't specified as a resource. */
   if(!wc.hIcon)
     wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
   
@@ -104,20 +88,18 @@ __glutOpenWin32Connection(char* display)
  
   __glutScreenWidth     = GetSystemMetrics(SM_CXSCREEN);
   __glutScreenHeight    = GetSystemMetrics(SM_CYSCREEN);
-  __glutMinWindowWidth  = GetSystemMetrics(SM_CXMIN);
-  __glutMinWindowHeight = GetSystemMetrics(SM_CYMIN);
 
-  /* set the root window to NULL because windows creates a top-level
+  /* Set the root window to NULL because windows creates a top-level
      window when the parent is NULL.  X creates a top-level window
      when the parent is the root window. */
   __glutRoot            = NULL;
 
-  /* set the display to 1 -- we shouldn't be using this anywhere
+  /* Set the display to 1 -- we shouldn't be using this anywhere
      (except as an argument to X calls). */
   __glutDisplay         = (Display*)1;
 
-  /* there isn't any concept of multiple screens in Win32, therefore,
-     we don't need to keep track of the screen we're on...it's always
+  /* There isn't any concept of multiple screens in Win32, therefore,
+     we don't need to keep track of the screen we're on... it's always
      the same one. */
   __glutScreen          = 0;
 }
@@ -199,7 +181,7 @@ glutInit(int *argcp, char **argv)
   if (!__glutArgv)
     __glutFatalError("out of memory.");
   for (i = 0; i < __glutArgc; i++) {
-    __glutArgv[i] = strdup(argv[i]);
+    __glutArgv[i] = __glutStrdup(argv[i]);
     if (!__glutArgv[i])
       __glutFatalError("out of memory.");
   }
@@ -287,20 +269,12 @@ glutInit(int *argcp, char **argv)
          width windows */
       if (width > 0)
         __glutInitWidth = width;
-#if defined(WIN32)
-      if (width < __glutMinWindowWidth)
-	__glutWarning("requested width is less than minimum allowed.");
-#endif /* WIN32 */
     }
     if (HeightValue & flags) {
       /* Careful because X does not allow zero or negative
          height windows */
       if (height > 0)
         __glutInitHeight = height;
-#if defined(WIN32)
-      if (height < __glutMinWindowHeight)
-	__glutWarning("requested height is less than minimum allowed.");
-#endif /* WIN32 */
     }
     glutInitWindowSize(__glutInitWidth, __glutInitHeight);
     if (XValue & flags) {

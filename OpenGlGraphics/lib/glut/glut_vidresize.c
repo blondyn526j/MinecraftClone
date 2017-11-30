@@ -38,9 +38,10 @@ static int dx = -1, dy = -1, dw = -1, dh = -1;
    resizing from an indirect OpenGL context (either local or
    over a network). */
 
+#ifdef GLX_SGIX_video_resize
+
 static volatile int errorCaught;
 
-#ifdef GLX_SGIX_video_resize
 /* ARGSUSED */
 static
 catchXSGIvcErrors(Display * dpy, XErrorEvent * event)

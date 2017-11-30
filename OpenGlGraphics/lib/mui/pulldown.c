@@ -88,6 +88,8 @@ enum muiReturnValue  pdhandler(muiObject *obj, int event, int value, int x, int 
 {
     int i;
     Pulldown *pd = (Pulldown *)obj->object;
+ 
+    if( !muiGetEnable(obj) || !muiGetVisible(obj) ) return MUI_NO_ACTION;
     
     if (event == MUI_DEVICE_UP) {
 	for (i = 0; i < pd->count; i++)
@@ -140,14 +142,14 @@ void	drawpulldown(muiObject *obj)
         Pulldown *pd = (Pulldown *)obj->object;
 
     	for (i = 0; i < pd->count; i++) {
-	    uiBlack();
-		uicmov2i(obj->xmin + pd->menus[i].xoffset, obj->ymin + 8);
-		uicharstr(pd->menus[i].title, UI_FONT_NORMAL);
+	    if (muiGetEnable(obj)) uiBlack(); else uiDkGray();
+	    uicmov2i(obj->xmin + pd->menus[i].xoffset, obj->ymin + 8);
+	    uicharstr(pd->menus[i].title, UI_FONT_NORMAL);
     	}
 	if (pd->ishelp) {
-	    uiBlack();
-		uicmov2i(obj->xmin + pd->helpmenu.xoffset, obj->ymin + 8);
-		uicharstr(pd->helpmenu.title, UI_FONT_NORMAL);
+	    if(muiGetEnable(obj)) uiBlack(); else uiDkGray();
+	    uicmov2i(obj->xmin + pd->helpmenu.xoffset, obj->ymin + 8);
+	    uicharstr(pd->helpmenu.title, UI_FONT_NORMAL);
 	}
     }
 

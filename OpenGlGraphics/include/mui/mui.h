@@ -79,6 +79,7 @@ typedef struct muiobj {
 /* General MUI Routines */
 
 void	    muiInit(void);
+void        muiAttachUIList(int uilist);
 void	    muiNewUIList(int  listid);
 void	    muiAddToUIList(int  uilist, muiObject *obj);
 void	    muiSetCallback(muiObject *obj, void (*callback)(muiObject *, enum muiReturnValue));

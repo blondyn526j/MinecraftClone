@@ -1,3 +1,4 @@
+
 /* Copyright (c) Mark J. Kilgard, 1994, 1997. */
 
 /* This program is freely distributable without licensing fees
@@ -639,11 +640,16 @@ __glutGetMenuItem(GLUTmenu * menu, Window win, int *which)
   GLUTmenuItem *item;
   int i;
 
+  if (menu->searched) {
+    __glutFatalError("submenu infinite loop detected");
+  }
+  menu->searched = True;
   i = menu->num;
   item = menu->list;
   while (item) {
     if (item->win == win) {
       *which = i;
+      menu->searched = False;
       return item;
     }
     if (item->isTrigger) {
@@ -652,12 +658,14 @@ __glutGetMenuItem(GLUTmenu * menu, Window win, int *which)
       subitem = __glutGetMenuItem(menuList[item->value],
         win, which);
       if (subitem) {
+        menu->searched = False;
         return subitem;
       }
     }
     i--;
     item = item->next;
   }
+  menu->searched = False;
   return NULL;
 }
 
@@ -752,6 +760,7 @@ glutCreateMenu(GLUTselectCB selectFunc)
   menu->num = 0;
   menu->submenus = 0;
   menu->managed = False;
+  menu->searched = False;
   menu->pixwidth = 0;
   menu->select = selectFunc;
   menu->list = NULL;
@@ -847,7 +856,7 @@ setMenuItem(GLUTmenuItem * item, const char *label,
   GLUTmenu *menu;
 
   menu = item->menu;
-  item->label = strdup(label);
+  item->label = __glutStrdup(label);
   if (!item->label)
     __glutFatalError("out of memory.");
   item->isTrigger = isTrigger;

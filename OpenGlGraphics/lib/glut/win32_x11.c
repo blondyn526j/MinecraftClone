@@ -5,15 +5,12 @@
    and is provided without guarantee or warrantee expressed or 
    implied. This program is -not- in the public domain. */
 
-
 #include <stdio.h>
 #include "win32_x11.h"
-
 
 /* global variable that must be set for some functions to operate
    correctly. */
 HDC XHDC;
-
 
 Window
 XCreateWindow(Display* display, Window parent, int x, int y,
@@ -71,9 +68,6 @@ XCreateColormap(Display* display, Window root, Visual* visual, int alloc)
   if (!(pfd.dwFlags & PFD_NEED_PALETTE ||
       pfd.iPixelType == PFD_TYPE_COLORINDEX))
   {
-#if 0
-    printf("XCreateColormap(): no palette needed.\n");
-#endif
     return 0;
   }
 
@@ -97,12 +91,6 @@ XCreateColormap(Display* display, Window root, Visual* visual, int alloc)
     int greenMask = (1 << pfd.cGreenBits) - 1;
     int blueMask = (1 << pfd.cBlueBits) - 1;
     int i;
-
-#if 0
-    printf("XCreateColormap(): creating RGB ramp colormap of (%d) "
-	   "colors. %d %d %d %d %d %d\n", n, redMask, greenMask, 
-	   blueMask, pfd.cRedShift, pfd.cGreenShift, pfd.cBlueShift);
-#endif
 
     /* fill in an RGBA color palette */
     for (i = 0; i < n; ++i) {
@@ -179,38 +167,6 @@ XSetWindowColormap(Display* display, Window window, Colormap colormap)
      uses the WC_OWNDC flag! */
 }
 
-void
-XFreeColormap(Display* display, Colormap colormap)
-{
-  /* nothing magic about this. */
-  DeleteObject(colormap);
-}
-
-Cursor
-XCreateFontCursor(Display* display, char* shape)
-{
-  /* the actual XCreateFontCursor takes an unsigned int, but Win32
-     cursors are char*'s. */
-  return LoadCursor(NULL, shape);
-}
-
-void
-XDefineCursor(Display* display, Window window, Cursor cursor)
-{
-  /* not too much magic here. */
-  SetCursor(cursor);
-}
-
-void
-XFlush(Display* display)
-{
-  /* this really isn't needed in Win32 the same way it is in X11, so
-     it'll be a nop for now.  It could be GdiFlush(), if you REALLY
-     wanted an equivalent. */
-
-  /* GdiFlush(); */
-}
-
 Bool
 XTranslateCoordinates(Display *display, Window src, Window dst, 
 		      int src_x, int src_y, 
@@ -263,20 +219,6 @@ XGetGeometry(Display* display, Window window, Window* root_return,
 }
 
 int
-DisplayWidth(Display* display, int screen)
-{
-  /* not much magic here. */
-  return GetSystemMetrics(SM_CXSCREEN);  
-}
-
-int
-DisplayHeight(Display* display, int screen)
-{
-  /* not much magic here. */
-  return GetSystemMetrics(SM_CYSCREEN);
-}
-
-int
 DisplayWidthMM(Display* display, int screen)
 {
   int width;
@@ -307,41 +249,6 @@ DisplayHeightMM(Display* display, int screen)
 }
 
 void
-XMapWindow(Display* display, Window window)
-{
-  /* no magic here */
-  ShowWindow(window, SW_SHOWNORMAL);
-}
-
-void
-XUnmapWindow(Display* display, Window window)
-{
-  /* no magic here */
-  ShowWindow(window, SW_HIDE);
-}
-
-void
-XIconifyWindow(Display* display, Window window, int screen)
-{
-  /* no magic here */
-  ShowWindow(window, SW_MINIMIZE);
-}
-
-void
-XWithdrawWindow(Display* display, Window window, int screen)
-{
-  /* no magic here */
-  ShowWindow(window, SW_HIDE);
-}
-
-void
-XLowerWindow(Display* display, Window window)
-{
-  /* little magic here */
-  SetWindowPos(window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-}
-
-void
 XWarpPointer(Display* display, Window src, Window dst, 
 	     int src_x, int src_y, int src_width, int src_height,
 	     int dst_x, int dst_y)
@@ -359,21 +266,6 @@ XWarpPointer(Display* display, Window src, Window dst,
   SetCursorPos(point.x, point.y);
 }
 
-void
-XSetWMName(Display* display, Window window, XTextProperty *tp)
-{
-  /* pretty simple in Win32. */
-  SetWindowText(window, tp->value);
-}
-
-void
-XSetWMIconName(Display* display, Window window, XTextProperty *tp)
-{
-  /* there really isn't a way to set the icon name separate from the
-     windows name in Win32, so, just set the windows name. */
-  XSetWMName(display, window, tp);
-}
-
 int
 XPending(Display* display)
 {
@@ -383,30 +275,6 @@ XPending(Display* display)
 
   return PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE);
 }
-
-void
-XDestroyWindow(Display* display, Window window)
-{
-  /* nothing magic about this. */
-  DestroyWindow(window);
-}
-
-void
-XFree(void* data)
-{
-  /* anything that needs to be freed was allocated with malloc in our
-     fake X windows library for Win32, so free it with plain old
-     free(). */
-  free(data);
-}
-
-void
-XUngrabPointer(Display* display, int time)
-{
-  /* nothing to be done for this...the pointer is always 'ungrabbed'
-     in Win32. */
-}
-
 
 /* the following function was stolen from the X sources as indicated. */
 

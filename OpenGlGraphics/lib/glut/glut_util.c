@@ -7,10 +7,27 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 #include <stdio.h>
 
 #include <GL/glut.h>
 #include "glutint.h"
+
+/* strdup is actually not a standard ANSI C or POSIX routine
+   so implement a private one for GLUT.  OpenVMS does not have a
+   strdup; Linux's standard libc doesn't declare strdup by default
+   (unless BSD or SVID interfaces are requested). */
+char *
+__glutStrdup(const char *string)
+{
+  char *copy;
+
+  copy = malloc(strlen(string) + 1);
+  if (copy == NULL)
+    return NULL;
+  strcpy(copy, string);
+  return copy;
+}
 
 void
 __glutWarning(char *format,...)

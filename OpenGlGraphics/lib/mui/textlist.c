@@ -118,7 +118,7 @@ void	drawtl(muiObject *obj)
     uipushviewport();
     uiviewport(xmin+3, ymin-1, xmax-xmin-6, ymax-ymin);
     if (s) while (*s && item < tl->listheight) {
-	if (item == tl->selecteditem - tl->top) {
+	if (item == tl->selecteditem - tl->top && muiGetEnable(obj)) {
 	    ybot = ymin + 1 + (tl->listheight - item - 1)*TEXTHEIGHT;
 	    xright = xmin + 11 + FONTWIDTH*(int)strlen(*s);
     	    uiWhite();
@@ -126,14 +126,14 @@ void	drawtl(muiObject *obj)
 	}
 	
 	/* locate highlight */
-	if (item == tl->locateditem - tl->top) {
+	if (item == tl->locateditem - tl->top && muiGetEnable(obj)) {
 	    ybot = ymin + 1 + (tl->listheight - item - 1)*TEXTHEIGHT;
             xright = xmin + 11 + FONTWIDTH*(int)strlen(*s);
     	    uiWhite();
             	uirecti(xmin+3, ybot-1, xright+1, ybot + TEXTHEIGHT - 2);
             	uirecti(xmin+4, ybot, xright, ybot + TEXTHEIGHT - 3);
 	}
-    	uiBlack();
+    	if (muiGetEnable(obj)) uiBlack(); else uiDkGray();
 	    uicmov2i(xmin+8, ymin + 6 + (tl->listheight - item - 1)*TEXTHEIGHT);
 	    uicharstr(*s, UI_FONT_NORMAL);
 	item++; s++;
@@ -168,6 +168,8 @@ enum muiReturnValue tlhandler(muiObject *obj, int event, int value, int x, int y
 {
     int	i;
     TextList *tl = (TextList *)obj->object;
+
+    if( !muiGetEnable(obj) || !muiGetVisible(obj) ) return MUI_NO_ACTION;
 
     if (event == MUI_DEVICE_DOUBLE_CLICK) {
 	i = (y - obj->ymin - 3)/TEXTHEIGHT;
@@ -208,8 +210,6 @@ void	muiSetTLTop(muiObject *obj, float p)
 
 
 #ifdef NOTDEF
-
-static  short   intlboundaries(TextList *, long, long);
 
 /* SELECT STATE FUNCTIONS */
 

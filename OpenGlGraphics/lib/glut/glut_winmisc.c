@@ -1,3 +1,4 @@
+
 /* Copyright (c) Mark J. Kilgard, 1994.  */
 
 /* This program is freely distributable without licensing fees
@@ -13,10 +14,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>  /* for XA_STRING atom */
-#else
-extern int __glutMinWindowWidth;
-extern int __glutMinWindowHeight;
-#endif /* !WIN32 */
+#endif
 
 #include <GL/glut.h>
 #include "glutint.h"
@@ -66,13 +64,6 @@ glutReshapeWindow(int w, int h)
 {
   if (w <= 0 || h <= 0)
     __glutWarning("glutReshapeWindow: non-positive width or height not allowed");
-
-#if defined(WIN32)
-  if (w < __glutMinWindowWidth && !__glutCurrentWindow->parent)
-    __glutWarning("requested width is less than minimum allowed.");
-  if (h < __glutMinWindowHeight && !__glutCurrentWindow->parent)
-    __glutWarning("requested height is less than minimum allowed.");
-#endif /* WIN32 */
 
   __glutCurrentWindow->desiredWidth = w;
   __glutCurrentWindow->desiredHeight = h;

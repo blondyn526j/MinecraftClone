@@ -1,8 +1,10 @@
 #include "chunkManager.h"
+
 #define DRAW_DISTANCE 8
 #define BUFFERWIDTH 22
 #define SEALEVEL 55
 #define DESERTSTEP 0.5
+#define ASYNC_LOADING 0
 
 #define INFLUENCE_CONTINENTAL 120
 #define INFLUENCE_MAJ 80
@@ -17,15 +19,39 @@ int m_xyzToIndex(const int x, const int y, const int z)
 {
 	return x + CHUNKWIDTH * z + CHUNKWIDTH * CHUNKWIDTH * y;
 }
+
+int m_xzToChunkIndex(int x, int z)
+{
+	return m_mod(x, BUFFERWIDTH) + BUFFERWIDTH * m_mod(z, BUFFERWIDTH);
+}
+
 double m_clamp(const double val, const double max, const double min)
 {
 	return std::fmin(max, std::fmax(val, min));
 }
 
+void GetCoordsOnMap(int chunkX, int chunkZ, int blockX, int blockZ, double& xCoord, double& zCoord)
+{
+	xCoord = (double)(chunkX * CHUNKWIDTH + blockX) / 1000000;
+	zCoord = (double)(chunkZ * CHUNKWIDTH + blockZ) / 1000000;
+}
+
+char& ChunkManager::m_xyzToBlock(int globalX, int globalY, int globalZ)
+{
+	int chunkX = floor((double)globalX / CHUNKWIDTH);
+	int chunkZ = floor((double)globalZ / CHUNKWIDTH);
+
+	int blockX = m_mod(globalX, CHUNKWIDTH);
+	int blockZ = m_mod(globalZ, CHUNKWIDTH);
+	int blockY = globalY;
+
+	Chunk* chunk = m_chunks[m_xzToChunkIndex(chunkX, chunkZ)];
+
+	return chunk->blockIDs[m_xyzToIndex(blockX, blockY, blockZ)];
+}
+
 ChunkManager::ChunkManager(Blocks* blocks, Display* display)
 {
-	//m_shader = shader;
-	//m_transform = transform;
 	m_blocks = blocks;
 	m_display = display;
 	m_structures = Structures();
@@ -55,7 +81,7 @@ ChunkManager::ChunkManager(Blocks* blocks, Display* display)
 	m_mapHeightMin.SetSeed(626685);
 
 	m_mapTemp.SetNoiseType(FastNoise::PerlinFractal);
-	m_mapTemp.SetFrequency(2000);
+	m_mapTemp.SetFrequency(800);
 	m_mapTemp.SetInterp(FastNoise::Hermite);
 	m_mapTemp.SetSeed(626685);
 
@@ -84,11 +110,13 @@ ChunkManager::~ChunkManager()
 
 void ChunkManager::Draw(float x, float z)
 {
+	//std::cout << x << " " << z << std::endl;
+
 	m_display->Clear(0.7f + (m_mapTemp.GetNoise(x / 1000000, z / 1000000)) * 0.5, 0.9f + (m_mapTemp.GetNoise(x / 1000000, z / 1000000)) * 0.08, 0.98f, 1.0f);
 	//std::cout << 2 * (m_mapTemp.GetNoise(x / 1000000, z / 1000000)) << std::endl;
 
-	int xPos = x / CHUNKWIDTH;
-	int zPos = z / CHUNKWIDTH;
+	int xPos = floor((double)x / CHUNKWIDTH);
+	int zPos = floor((double)z / CHUNKWIDTH);
 
 	if (xPos != m_old_xPos || zPos != m_old_zPos)
 	{
@@ -97,8 +125,12 @@ void ChunkManager::Draw(float x, float z)
 		if (m_loadingThread.joinable())
 			m_loadingThread.join();
 
+#if ASYNC_LOADING
 		m_loadingThread = std::thread(&ChunkManager::UpdateBuffer, this, xPos, zPos);
-		//UpdateBuffer(xPos, zPos);
+#else
+		UpdateBuffer(xPos, zPos);
+#endif // ASYNC_LOADING
+
 
 		m_old_xPos = xPos;
 		m_old_zPos = zPos;
@@ -109,20 +141,29 @@ void ChunkManager::Draw(float x, float z)
 		m_display->ReassignBuffer();
 		m_bufferNeedsToBeReAssigned = false;
 	}
+
 }
 
-void ChunkManager::UpdateBuffer(int x, int z)
+void ChunkManager::UpdateBuffer(int chunkX, int chunkZ)
 {
-	for (int a = x - DRAW_DISTANCE; a <= x + DRAW_DISTANCE; a++)
-		for (int b = z - DRAW_DISTANCE; b <= z + DRAW_DISTANCE; b++)
-			if (m_chunks[m_mod(a, BUFFERWIDTH) + m_mod(b, BUFFERWIDTH) * BUFFERWIDTH]->chunkRoot != glm::vec3(CHUNKWIDTH * a, 0, CHUNKWIDTH * b))
-				LoadChunkFromFile(a, b);
+	for (int x = chunkX - DRAW_DISTANCE; x <= chunkX + DRAW_DISTANCE; x++)
+		for (int z = chunkZ - DRAW_DISTANCE; z <= chunkZ + DRAW_DISTANCE; z++)
+			if (m_chunks[m_mod(x, BUFFERWIDTH) + m_mod(z, BUFFERWIDTH) * BUFFERWIDTH]->chunkRoot != glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z))
+				LoadChunkFromFile(x, z);
 
-	for (int a = x - DRAW_DISTANCE; a <= x + DRAW_DISTANCE; a++)
-		for (int b = z - DRAW_DISTANCE; b <= z + DRAW_DISTANCE; b++)
+	for (int x = chunkX - DRAW_DISTANCE; x <= chunkX + DRAW_DISTANCE; x++)
+		for (int z = chunkZ - DRAW_DISTANCE; z <= chunkZ + DRAW_DISTANCE; z++)
 		{
-			DrawChunk(a, b);
+			DrawChunk(x, z);
 		}
+
+	//GENERATING TREES
+	for (int x = chunkX - DRAW_DISTANCE + 1; x <= chunkX + DRAW_DISTANCE - 1; x++)
+		for (int z = chunkZ - DRAW_DISTANCE + 1; z <= chunkZ + DRAW_DISTANCE - 1; z++)
+		{
+			GenerateTrees(x, z);
+		}
+	//END GENERATING TREES
 
 	m_bufferNeedsToBeReAssigned = true;
 }
@@ -245,8 +286,8 @@ void ChunkManager::LoadChunkFromFile(int x, int z)
 
 	file.read(ids, sizeof(char) * CHUNKSIZE);
 
-	delete(m_chunks[m_mod(x, BUFFERWIDTH) + BUFFERWIDTH * m_mod(z, BUFFERWIDTH)]);
-	m_chunks[m_mod(x, BUFFERWIDTH) + BUFFERWIDTH * m_mod(z, BUFFERWIDTH)] = new Chunk(ids, glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z));
+	delete(m_chunks[m_xzToChunkIndex(x, z)]);
+	m_chunks[m_xzToChunkIndex(x, z)] = new Chunk(ids, glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z));
 
 	file.close();
 
@@ -265,36 +306,26 @@ void ChunkManager::SaveChunkToFile(int x, int z, Chunk* chunk)
 
 Chunk* ChunkManager::GenerateChunk(int x, int z)
 {
-	char* ids = new char[CHUNKSIZE + 1];
+	char* ids = new char[CHUNKSIZE];
 	for (int az = 0; az < CHUNKWIDTH; az++)
 	{
 		for (int ax = 0; ax < CHUNKWIDTH; ax++)
 		{
-			double coordX = (double)(x * CHUNKWIDTH + ax) / 1000000;
-			double coordZ = (double)(z * CHUNKWIDTH + az) / 1000000;
-			double valContinental = m_clamp(m_mapHeightContinental.GetNoise(coordX, coordZ) + 0.5, 1, 0.02);
-			double valMaj = m_clamp(m_mapHeightMaj.GetNoise(coordX, coordZ) + 0.5, 1, 0.02);
-			double valMed = m_clamp((m_mapHeightMed.GetNoise(coordX, coordZ) + 0.5) / 2, 1, 0);
-			double valMin = m_mapHeightMin.GetNoise(coordX, coordZ) + 0.5;
-			double valVar = m_clamp(m_mapVariety.GetNoise(coordX, coordZ) + 0.5, 1.5, 0);
-			double valTemp = (m_mapTemp.GetNoise(coordX, coordZ) + 1) / 2;
-			double valSandArea = m_mapSandArea.GetNoise(coordX, coordZ);
-			double valBeachHeight = m_mapBeachHeight.GetNoise(coordX, coordZ);
-			
-			int groundLevel =
-				INFLUENCE_CONTINENTAL * valContinental +
-				
-				valVar * (
-					INFLUENCE_MAJ * valMaj +
-					INFLUENCE_MED * valMed +
-					INFLUENCE_MIN * valMin);
+			double xCoord = 0;
+			double zCoord = 0;
+			GetCoordsOnMap(x, z, ax, az, xCoord, zCoord);
+			double valTemp = (m_mapTemp.GetNoise(xCoord, zCoord) + 1) / 2;
+			double valSandArea = m_mapSandArea.GetNoise(xCoord, zCoord);
+			double valBeachHeight = m_mapBeachHeight.GetNoise(xCoord, zCoord);
+
+			int groundLevel = GetGroudLevel(xCoord, zCoord);
 
 
 			for (int ay = 0; ay < CHUNKHEIGHT; ay++)
 			{
 				if (ay < groundLevel)
 				{
-					if(valTemp < 0.4)
+					if (valTemp < 0.4)
 						ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASSC;
 					else if (valTemp < 0.6)
 						ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASS0;
@@ -337,19 +368,14 @@ Chunk* ChunkManager::GenerateChunk(int x, int z)
 	{
 		for (int ax = 0; ax < CHUNKWIDTH; ax++)
 		{
-			double coordX = (double)(x * CHUNKWIDTH + ax) / 1000000;
-			double coordZ = (double)(z * CHUNKWIDTH + az) / 1000000;
-			double valMaj = m_clamp(m_mapHeightMaj.GetNoise(coordX, coordZ) + 0.5, 1.5, 0.02);
-			double valMed = m_clamp((m_mapHeightMed.GetNoise(coordX, coordZ) + 0.7) / 2, 1, 0);
-			double valMin = m_mapHeightMin.GetNoise(coordX, coordZ) + 0.5;
-			double valVar = m_clamp(m_mapVariety.GetNoise(coordX, coordZ) + 0.5, 1.5, 0);
-			double valTemp = (m_mapTemp.GetNoise(coordX, coordZ) + 1) / 2;
+			double xCoord = 0;
+			double zCoord = 0;
+			GetCoordsOnMap(x, z, ax, az, xCoord, zCoord);
+			double valTemp = (m_mapTemp.GetNoise(xCoord, zCoord) + 1) / 2;
+			double valSandArea = m_mapSandArea.GetNoise(xCoord, zCoord);
+			double valBeachHeight = m_mapBeachHeight.GetNoise(xCoord, zCoord);
 
-			int groundLevel =
-				INFLUENCE_MAJ * valMaj +
-				valVar * (
-					INFLUENCE_MED * valMed +
-					INFLUENCE_MIN * valMin);
+			int groundLevel = GetGroudLevel(xCoord, zCoord);
 
 			if (ax == 0 && az == 0)
 			{
@@ -363,27 +389,53 @@ Chunk* ChunkManager::GenerateChunk(int x, int z)
 		}
 	}*/
 
-	ids[CHUNKSIZE] = 0;
-
-	delete(m_chunks[m_mod(x, BUFFERWIDTH) + BUFFERWIDTH * m_mod(z, BUFFERWIDTH)]);
+	delete(m_chunks[m_xzToChunkIndex(x, z)]);
 
 	Chunk* chunk = new Chunk(ids, glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z));
-	m_chunks[m_mod(x, BUFFERWIDTH) + BUFFERWIDTH * m_mod(z, BUFFERWIDTH)] = chunk;
+	m_chunks[m_xzToChunkIndex(x, z)] = chunk;
+
+	//GenerateTrees(x, z);
+
 	return chunk;
 }
 
-void ChunkManager::GenerateTrees(int x, int z)
+int ChunkManager::GetGroudLevel(double x, double z)
 {
-	if (m_chunks[m_mod(x, BUFFERWIDTH) + m_mod(z, BUFFERWIDTH) * BUFFERWIDTH] == 0 &&
-		m_chunks[m_mod(x, BUFFERWIDTH) + m_mod(z, BUFFERWIDTH) * BUFFERWIDTH]->chunkRoot != glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z))
-	{
+	double valContinental = m_clamp(m_mapHeightContinental.GetNoise(x, z) + 0.5, 1, 0.02);
+	double valMaj = m_clamp(m_mapHeightMaj.GetNoise(x, z) + 0.5, 1, 0.02);
+	double valMed = m_clamp((m_mapHeightMed.GetNoise(x, z) + 0.5) / 2, 1, 0);
+	double valMin = m_mapHeightMin.GetNoise(x, z) + 0.5;
+	double valVar = m_clamp(m_mapVariety.GetNoise(x, z) + 0.5, 1.5, 0);
 
-	}
+	int groundLevel =
+		INFLUENCE_CONTINENTAL * valContinental +
+		valVar * (
+			INFLUENCE_MAJ * valMaj +
+			INFLUENCE_MED * valMed +
+			INFLUENCE_MIN * valMin);
+
+	return groundLevel;
 }
 
-void ChunkManager::GenerateStructure(int type, int x, int y, int z)
+void ChunkManager::GenerateTrees(int chunkX, int chunkZ)
 {
+	double xCoord = 0;
+	double zCoord = 0;
+	int blockX = rand()%16;
+	int blockZ = rand()%16;
 
+	GetCoordsOnMap(chunkX, chunkZ, blockX, blockZ, xCoord, zCoord);
+
+	GenerateStructure(Structure::TREE0, chunkX * CHUNKWIDTH + blockX, GetGroudLevel(xCoord, zCoord), chunkZ * CHUNKWIDTH + blockZ);
+}
+
+void ChunkManager::GenerateStructure(int type, int globalX, int globalY, int globalZ)
+{
+	Structure* structure = m_structures[0];
+	for (int i = 0; i < structure->length; i < ++i)
+	{
+		m_xyzToBlock(globalX + structure->offsets[i].x, globalY + structure->offsets[i].y, globalZ + structure->offsets[i].z) = structure->ids[i];
+	}
 }
 
 bool ChunkManager::isTransparent(int idOther, int idThis)

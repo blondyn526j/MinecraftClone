@@ -17,7 +17,7 @@ RM = -rm -rf
 .SUFFIXES: .o .fc .c .s .f
 
 # F2CFLAGS is fancy macro to get the right ABI option for mkf2c
-F2CFLAGS=-l `echo $(CSTYLE) | fmt -1 | grep -v mips | grep -v o32`
+F2CFLAGS=-l `echo $(CSTYLE) | fmt -1 | grep -v mips | sed s/-o32//g`
 LCOPTS = -fullwarn
 LWOFF = ,813,852,827,826
 LCINCS = -I$(TOP)/include -I$(TOP)/lib/glut
@@ -38,13 +38,14 @@ REFSRCS = \
   glut_modifier.c \
   glut_overlay.c \
   glut_shapes.c \
+  glut_swap.c \
   glut_swidth.c \
   glut_teapot.c \
   glut_util.c \
   glut_vidresize.c \
   glut_warp.c \
   glut_win.c \
-  glut_winmisc.c \
+  glut_winmisc.c
 
 ORIGSRCS = \
   fglut.c \
@@ -56,11 +57,11 @@ ORIGSRCS = \
   fglut_mroman.c \
   fglut_roman.c \
   fglut_tr10.c \
-  fglut_tr24.c \
+  fglut_tr24.c
 
 SRCS = \
   $(REFSRCS) \
-  $(ORIGSRCS) \
+  $(ORIGSRCS)
 
 OBJS = $(SRCS:.c=.o)
 
@@ -99,6 +100,7 @@ glut_modifier.o: glut_modifier.fc
 glut_overlay.o: glut_overlay.fc
 glut_shapes.o: glut_shapes.fc
 glut_stroke.o: glut_stroke.fc
+glut_swap.o: glut_swap.fc
 glut_swidth.o: glut_swidth.fc
 glut_teapot.o: glut_teapot.fc
 glut_util.o: glut_util.fc

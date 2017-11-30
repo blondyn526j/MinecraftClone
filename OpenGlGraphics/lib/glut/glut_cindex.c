@@ -1,4 +1,5 @@
-/* Copyright (c) Mark J. Kilgard, 1994, 1996. */
+
+/* Copyright (c) Mark J. Kilgard, 1994, 1996, 1997. */
 
 /* This program is freely distributable without licensing fees 
    and is provided without guarantee or warrantee expressed or 
@@ -7,99 +8,11 @@
 #include <stdlib.h>
 #include <GL/glut.h>
 #include "glutint.h"
-#include "layerutil.h"
-
-GLUTcolormap *__glutColormapList = NULL;
-
-static GLUTcolormap *
-associateNewColormap(XVisualInfo * vis)
-{
-  GLUTcolormap *cmap;
-  int transparentPixel, i;
-  unsigned long pixels[255];
-
-  cmap = (GLUTcolormap *) malloc(sizeof(GLUTcolormap));
-  if (!cmap)
-    __glutFatalError("out of memory.");
-#if defined(WIN32)
-  pixels[0] = 0;		  /* avoid compilation warnings on win32 */
-  cmap->visual = 0;
-  cmap->size = 256;			/* always assume 256 on Win32 */
-#else
-  cmap->visual = vis->visual;
-  cmap->size = vis->visual->map_entries;
-#endif
-  cmap->refcnt = 1;
-  cmap->cells = (GLUTcolorcell *)
-    malloc(sizeof(GLUTcolorcell) * cmap->size);
-  if (!cmap->cells)
-    __glutFatalError("out of memory.");
-  /* make all color cell entries be invalid */
-  for (i = cmap->size - 1; i >= 0; i--) {
-    cmap->cells[i].component[GLUT_RED] = -1.0;
-    cmap->cells[i].component[GLUT_GREEN] = -1.0;
-    cmap->cells[i].component[GLUT_BLUE] = -1.0;
-  }
-  transparentPixel = __glutGetTransparentPixel(__glutDisplay, vis);
-  if (transparentPixel == -1 || transparentPixel >= cmap->size) {
-
-    /* If there is no transparent pixel or if the transparent
-       pixel is outside the range of valid colormap cells (HP
-       can implement their overlays this smart way since their
-       transparent pixel is 255), we can AllocAll the colormap.
-       See note below.  */
-
-    cmap->cmap = XCreateColormap(__glutDisplay,
-      __glutRoot, cmap->visual, AllocAll);
-  } else {
-
-    /* On machines where zero (or some other value in the range
-       of 0 through map_entries-1), BadAlloc may be generated
-       when an AllocAll overlay colormap is allocated since the
-       transparent pixel precludes all the cells in the colormap
-       being allocated (the transparent pixel is pre-allocated).
-       So in this case, use XAllocColorCells to allocate
-       map_entries-1 pixels (that is, all but the transparent
-       pixel.  */
-
-#if defined(WIN32)
-    cmap->cmap = XCreateColormap(__glutDisplay,
-      __glutRoot, 0, AllocNone);
-#else
-    cmap->cmap = XCreateColormap(__glutDisplay,
-      __glutRoot, vis->visual, AllocNone);
-#endif
-    XAllocColorCells(__glutDisplay, cmap->cmap, False, 0, 0,
-      pixels, cmap->size - 1);
-  }
-  cmap->next = __glutColormapList;
-  __glutColormapList = cmap;
-  return cmap;
-}
-
-GLUTcolormap *
-__glutAssociateColormap(XVisualInfo * vis)
-{
-  GLUTcolormap *cmap = __glutColormapList;
-
-  while (cmap != NULL) {
-#if !defined(WIN32)
-    /* Play safe: compare visual IDs, not Visual*'s. */
-    if (cmap->visual->visualid == vis->visual->visualid) {
-      /* Already have created colormap for the visual. */
-      cmap->refcnt++;
-      return cmap;
-    }
-#endif
-    cmap = cmap->next;
-  }
-  return associateNewColormap(vis);
-}
 
 #define CLAMP(i) ((i) > 1.0 ? 1.0 : ((i) < 0.0 ? 0.0 : (i)))
 
 /* CENTRY */
-void APIENTRY 
+void APIENTRY
 glutSetColor(int ndx, GLfloat red, GLfloat green, GLfloat blue)
 {
   GLUTcolormap *cmap, *newcmap;
@@ -126,7 +39,7 @@ glutSetColor(int ndx, GLfloat red, GLfloat green, GLfloat blue)
     return;
   }
 #if defined(WIN32)
-  if (ndx >= 256 ||			/* always assume 256 colors on Win32 */
+  if (ndx >= 256 ||     /* always assume 256 colors on Win32 */
 #else
   if (ndx >= vis->visual->map_entries ||
 #endif
@@ -135,9 +48,7 @@ glutSetColor(int ndx, GLfloat red, GLfloat green, GLfloat blue)
     return;
   }
   if (cmap->refcnt > 1) {
-    GLUTwindow *toplevel;
-
-    newcmap = associateNewColormap(vis);
+    newcmap = __glutAssociateNewColormap(vis);
     cmap->refcnt--;
     /* Wouldn't it be nice if XCopyColormapAndFree could be
        told not to free the old colormap's entries! */
@@ -162,11 +73,11 @@ glutSetColor(int ndx, GLfloat red, GLfloat green, GLfloat blue)
           cmap->cells[i].component[GLUT_BLUE];
         color.flags = DoRed | DoGreen | DoBlue;
 #if defined(WIN32)
-	if (IsWindowVisible(__glutCurrentWindow->win)) {
-	  XHDC = __glutCurrentWindow->hdc;
-	} else {
-	  XHDC = 0;
-	}
+        if (IsWindowVisible(__glutCurrentWindow->win)) {
+          XHDC = __glutCurrentWindow->hdc;
+        } else {
+          XHDC = 0;
+        }
 #endif
         XStoreColor(__glutDisplay, newcmap->cmap, &color);
       } else {
@@ -184,10 +95,16 @@ glutSetColor(int ndx, GLfloat red, GLfloat green, GLfloat blue)
     XSetWindowColormap(__glutDisplay,
       __glutCurrentWindow->renderWin, cmap->cmap);
 
-    toplevel = __glutToplevelOf(__glutCurrentWindow);
-    if (toplevel->cmap != cmap->cmap) {
-      __glutPutOnWorkList(toplevel, GLUT_COLORMAP_WORK);
+#if !defined(WIN32)
+    {
+      GLUTwindow *toplevel;
+
+      toplevel = __glutToplevelOf(__glutCurrentWindow);
+      if (toplevel->cmap != cmap->cmap) {
+        __glutPutOnWorkList(toplevel, GLUT_COLORMAP_WORK);
+      }
     }
+#endif
   }
   color.pixel = ndx;
   red = CLAMP(red);
@@ -244,42 +161,13 @@ glutGetColor(int ndx, int comp)
   }
   return colormap->cells[ndx].component[comp];
 }
-/* ENDCENTRY */
 
-void
-__glutFreeColormap(GLUTcolormap * cmap)
-{
-  GLUTcolormap *cur, **prev;
-
-  cmap->refcnt--;
-  if (cmap->refcnt == 0) {
-    /* remove from colormap list */
-    cur = __glutColormapList;
-    prev = &__glutColormapList;
-    while (cur) {
-      if (cur == cmap) {
-        *prev = cmap->next;
-        break;
-      }
-      prev = &(cur->next);
-      cur = cur->next;
-    }
-    /* actually free colormap */
-    XFreeColormap(__glutDisplay, cmap->cmap);
-    free(cmap->cells);
-    free(cmap);
-  }
-}
-
-/* CENTRY */
-void APIENTRY 
+void APIENTRY
 glutCopyColormap(int winnum)
 {
   GLUTwindow *window = __glutWindowList[winnum - 1];
-  GLUTcolormap *oldcmap, *newcmap, *copycmap;
+  GLUTcolormap *oldcmap, *newcmap;
   XVisualInfo *dstvis;
-  XColor color;
-  int i, last;
 
   if (__glutCurrentWindow->renderWin == __glutCurrentWindow->win) {
     oldcmap = __glutCurrentWindow->colormap;
@@ -325,11 +213,15 @@ glutCopyColormap(int winnum)
     }
     XSetWindowColormap(__glutDisplay, __glutCurrentWindow->renderWin,
       newcmap->cmap);
-    __glutPutOnWorkList(__glutToplevelOf(window), GLUT_COLORMAP_WORK);
 #if !defined(WIN32)
+    __glutPutOnWorkList(__glutToplevelOf(window), GLUT_COLORMAP_WORK);
   } else {
+    GLUTcolormap *copycmap;
+    XColor color;
+    int i, last;
+
     /* Visuals different - need a distinct X colormap! */
-    copycmap = associateNewColormap(dstvis);
+    copycmap = __glutAssociateNewColormap(dstvis);
     /* Wouldn't it be nice if XCopyColormapAndFree could be
        told not to free the old colormap's entries! */
     last = newcmap->size;

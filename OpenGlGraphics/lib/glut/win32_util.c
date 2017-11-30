@@ -9,7 +9,11 @@
 #include "glutint.h"
 #include "glutstroke.h"
 #include "glutbitmap.h"
+#if defined(__CYGWIN32__)
+typedef MINMAXINFO* LPMINMAXINFO;
+#else
 #include <sys/timeb.h>
+#endif
 
 extern StrokeFontRec glutStrokeRoman, glutStrokeMonoRoman;
 extern BitmapFontRec glutBitmap8By13, glutBitmap9By15, glutBitmapTimesRoman10, glutBitmapTimesRoman24, glutBitmapHelvetica10, glutBitmapHelvetica12, glutBitmapHelvetica18;
@@ -106,15 +110,13 @@ static HMENU __glutHMenu;
 
 LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 { 
-  POINT         point;			// point structure
-  PAINTSTRUCT   ps;			// paint structure
-  LPMINMAXINFO  minmax;			// minimum/maximum info structure
-  GLUTwindow*   window;			// glut window associated with message
-  GLUTmenu*     menu;			// glut menu associated with message
+  POINT         point;			/* Point structure. */
+  PAINTSTRUCT   ps;			/* Paint structure. */
+  LPMINMAXINFO  minmax;			/* Minimum/maximum info structure. */
+  GLUTwindow*   window;			/* GLUT window associated with message. */
+  GLUTmenu*     menu;			/* GLUT menu associated with message. */
   int x, y, width, height, key;
   int button = -1;
-
-  //  printf("__glutWindowProc(0x%x, 0x%x, 0x%x, 0x%x)\n", hwnd, msg, wParam, lParam);
 
   switch(msg) {
   case WM_CREATE:
@@ -125,19 +127,20 @@ LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return 0;
 
   case WM_DESTROY:
-    // TODO: need to add this.
-    //    purgeStaleWindow(hwnd);
+#if 0
+    /* TODO: need to add this. */
+    purgeStaleWindow(hwnd);
+#endif
     return 0;
 
   case WM_PAINT:
-//    printf("WM_PAINT\n");
     window = __glutGetWindow(hwnd);
     if (window) {
-      BeginPaint(hwnd, &ps);		// must have this for some Win32 reason
+      BeginPaint(hwnd, &ps);		/* Must have this for some Win32 reason. */
 #if TAKE_THIS_OUT
       if (window->colormap) {
 	SelectPalette(window->hdc, window->colormap->cmap, FORCE_FOREGROUND);
-	RealizePalette(window->hdc);	       // remap the custom palette
+	RealizePalette(window->hdc);	       /* Remap the custom palette. */
       }
 #endif
       EndPaint(hwnd, &ps);
@@ -242,7 +245,7 @@ LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       ScreenToClient(window->win, &point);
       __glutSetWindow(window);
       __glutModifierMask = 0;
-      if (GetKeyState(VK_SHIFT) < 0)	// < 0 = high order bit is on
+      if (GetKeyState(VK_SHIFT) < 0)	/* < 0 = high order bit is on */
 	__glutModifierMask |= ShiftMask;
       if (GetKeyState(VK_CONTROL) < 0)
 	__glutModifierMask |= ControlMask;
@@ -301,7 +304,7 @@ LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	
         __glutSetWindow(window);
 	__glutModifierMask = 0;
-	if (GetKeyState(VK_SHIFT) < 0)	// < 0 = high order bit is on
+	if (GetKeyState(VK_SHIFT) < 0)	/* < 0 = high order bit is on. */
 	  __glutModifierMask |= ShiftMask;
 	if (GetKeyState(VK_CONTROL) < 0)
 	  __glutModifierMask |= ControlMask;
@@ -324,7 +327,7 @@ LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     if (button < 0)
       button = GLUT_RIGHT_BUTTON;
 
-    /* bail out if we're processing a menu */
+    /* Bail out if we're processing a menu. */
     if (__glutMappedMenu) {
       GetCursorPos(&point);
       ScreenToClient(hwnd, &point);
@@ -333,9 +336,9 @@ LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       if (button == GLUT_MIDDLE_BUTTON) {
 	return 0;
 	/* For some reason, the code below always returns -1 even
-	 though the point IS IN THE ITEM!  Therefore, just bail out if
-	 we get a middle mouse up.  The user must select using the
-	 left mouse button.  Stupid Win32. */
+	   though the point IS IN THE ITEM!  Therefore, just bail out if
+	   we get a middle mouse up.  The user must select using the
+	   left mouse button.  Stupid Win32. */
 #if 0
  	int item = MenuItemFromPoint(hwnd, __glutHMenu, point);
  	printf("item = %d %d %d\n", item, point.x, point.y);
@@ -352,7 +355,7 @@ LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       return 0;
     }
 
-    /* release the mouse capture */
+    /* Release the mouse capture. */
     ReleaseCapture();
 
     window = __glutGetWindow(hwnd);
@@ -390,12 +393,14 @@ LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return 0;
 
   case WM_TIMER:
-//     /* if the timer id is 2, then this is the timer that is set up in
-//        the main glut message processing loop, and we don't want to do
-//        anything but acknowledge that we got it.  It is used to prevent
-//        CPU spiking when an idle function is installed. */
-//     if (wParam == 2)
-//       return 0;
+#if 0
+    /* if the timer id is 2, then this is the timer that is set up in
+       the main glut message processing loop, and we don't want to do
+       anything but acknowledge that we got it.  It is used to prevent
+       CPU spiking when an idle function is installed. */
+    if (wParam == 2)
+      return 0;
+#endif
 
     /* only worry about the idle function and the timeouts, since
        these are the only events we expect to process during
@@ -437,7 +442,6 @@ LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return 0;
 
   case WM_MOUSEMOVE:
-    //    printf("WM_MOUSEMOVE\n");
     if (!__glutMappedMenu) {
       window = __glutGetWindow(hwnd);
       if (window) {
@@ -492,12 +496,14 @@ LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
   case WM_SIZE:
     window = __glutGetWindow(hwnd);
     if (window) {
+#if 0
       if (window->win != hwnd) {
 	/* Ignore ConfigureNotify sent to the overlay planes.
 	   GLUT could get here because overlays select for
 	   StructureNotify events to receive DestroyNotify. */
 	break;
       }
+#endif
       width = LOWORD(lParam);
       height = HIWORD(lParam);
       if (width != window->width || height != window->height) {
@@ -515,18 +521,14 @@ LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	window->reshape(width, height);
 	window->forceReshape = FALSE;
 	/* A reshape should be considered like posting a
-	   redisplay; this is necessary for the "Mesa
-	   glXSwapBuffers to repair damage" hack to operate
-	   correctly.  Without it, there's not an initial
-	   back buffer render from which to blit from when
-	   damage happens to the window. */
-	__glutPostRedisplay(window, GLUT_REDISPLAY_WORK);
+	   repair request. */
+	__glutPostRedisplay(window, GLUT_REPAIR_WORK);
       }
     }
     return 0;
 
   case WM_SETCURSOR:
-    /* if the cursor is not in the client area, then we want to send
+    /* If the cursor is not in the client area, then we want to send
        this message to the default window procedure ('cause its
        probably in the border or title, and we don't handle that
        cursor.  otherwise, set our cursor.  Win32 makes us set the
@@ -535,17 +537,13 @@ LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       goto defproc;
     window = __glutGetWindow(hwnd);
     if (window) {
-      /* since Win32 allows the parent to control a child windows
+      /* Since Win32 allows the parent to control a child windows
 	 cursor, if the cursor is in a child of this window, bail
 	 out. */
       GetCursorPos(&point);
       ScreenToClient(hwnd, &point);
       if (hwnd != ChildWindowFromPoint(hwnd, point))
 	break;
-      /* KLUDGE: should actually call __glutSetWindow here, but since
-         it does a glXMakeCurrent(), I'm going to avoid doing that and
-         simply set the current window instead. */
-      /* __glutSetWindow(window); */
       __glutCurrentWindow = window;
       glutSetCursor(window->cursor);
     }
@@ -560,73 +558,9 @@ LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	window->entryState = WM_SETFOCUS;
 	__glutSetWindow(window);
 	window->entry(GLUT_ENTERED);
-//           if (event.type == EnterNotify) {
-
-//             /* With overlays established, X can report two
-//                enter events for both the overlay and normal
-//                plane window. Do not generate a second enter
-//                callback if we reported one without an
-//                intervening leave. */
-
-//             if (window->entryState != EnterNotify) {
-//               int num = window->num;
-//               Window xid = window->win;
-
-//               window->entryState = EnterNotify;
-//               __glutSetWindow(window);
-//               window->entry(GLUT_ENTERED);
-
-//               if (__glutMappedMenu) {
-
-//                 /* Do not generate any passive motion events
-//                    when menus are in use. */
-
-//               } else {
-
-//                 /* An EnterNotify event can result in a
-//                    "compound" callback if a passive motion
-//                    callback is also registered. In this case,
-//                    be a little paranoid about the possibility
-//                    the window could have been destroyed in the
-//                    entry callback. */
-
-//                 window = __glutWindowList[num];
-//                 if (window && window->passive && window->win == xid) {
-//                   __glutSetWindow(window);
-//                   window->passive(event.xcrossing.x, event.xcrossing.y);
-//                 }
-//               }
-//             }
-//           } else {
-//             if (window->entryState != LeaveNotify) {
-
-//               /* When an overlay is established for a window
-//                  already mapped and with the pointer in it, the
-//                  X server will generate a leave/enter event pair
-//                  as the pointer leaves (without moving) from the
-//                  normal plane X window to the newly mapped
-//                  overlay  X window (or vice versa). This
-//                  enter/leave pair should not be reported to the
-//                  GLUT program since the pair is a consequence of
-//                  creating (or destroying) the overlay, not an
-//                  actual leave from the GLUT window. */
-
-//               if (XEventsQueued(__glutDisplay, QueuedAfterReading)) {
-//                 XPeekEvent(__glutDisplay, &ahead);
-//                 if (ahead.type == EnterNotify &&
-//                   __glutGetWindow(ahead.xcrossing.window) == window) {
-//                   XNextEvent(__glutDisplay, &event);
-//                   break;
-//                 }
-//               }
-//               window->entryState = LeaveNotify;
-//               __glutSetWindow(window);
-//               window->entry(GLUT_LEFT);
-//             }
-//           }
-//         } else if (window->passive) {
-//           __glutSetWindow(window);
-//           window->passive(event.xcrossing.x, event.xcrossing.y);
+	/* XXX Generation of fake passive notify?  See how    much
+	   work the X11 code does to support fake passive    notify
+	   callbacks. */
       }
     }
     return 0;
@@ -652,7 +586,7 @@ LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       GLUTwindow* child;
       int visState;
       visState = !IsIconic(window->win);
-      if (visState) {			// not iconic
+      if (visState) {			/* Not iconic. */
 	visState = IsWindowVisible(window->win);
       }
       if (visState != window->visState) {
@@ -660,10 +594,9 @@ LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	  window->visState = visState;
 	  __glutSetWindow(window);
 	  window->windowStatus(visState);
-	  //	  window->visibility(visState ? GLUT_VISIBLE : GLUT_NOT_VISIBLE);
 	}
-	// since Win32 only sends an activate for the toplevel window,
-	// update the visibility for all the child windows
+	/* Since Win32 only sends an activate for the toplevel window,
+	   update the visibility for all the child windows. */
 	child = window->children;
 	while (child) {
 	  child->visState = visState;
@@ -671,7 +604,6 @@ LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    child->visState = visState;
 	    __glutSetWindow(child);
 	    child->windowStatus(visState);
-	    //	    child->visibility(visState ? GLUT_VISIBLE : GLUT_NOT_VISIBLE);
 	  }
 	  child = child->siblings;
 	}
@@ -695,7 +627,8 @@ LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     return FALSE;
 
-  /* miscellaneous messages (don't really need to enumerate them,
+#if 0
+  /* Miscellaneous messages (don't really need to enumerate them,
      but it's good to know what you're not getting sometimes.) */
   case WM_NCHITTEST:
     /* this event is generated by every mouse move event. */
@@ -746,9 +679,9 @@ LONG WINAPI __glutWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     goto defproc;
   case WM_ENTERIDLE:
     goto defproc;
+#endif
 
   default: 
-//    printf("default: 0x%04x\n", msg);
     goto defproc;
   }
 

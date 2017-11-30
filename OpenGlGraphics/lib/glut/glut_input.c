@@ -1,4 +1,5 @@
-/* Copyright (c) Mark J. Kilgard, 1994. */
+
+/* Copyright (c) Mark J. Kilgard, 1994, 1997. */
 
 /* This program is freely distributable without licensing fees
    and is provided without guarantee or warrantee expressed or
@@ -30,6 +31,7 @@ XDevice *__glutTablet = NULL;
 XDevice *__glutDials = NULL;
 XDevice *__glutSpaceball = NULL;
 
+#if !defined(WIN32)
 typedef struct _Range {
   int min;
   int range;
@@ -95,7 +97,6 @@ normalizeSpaceballDelta(int axis, int rawValue)
 static void
 queryTabletPos(GLUTwindow * window)
 {
-#if !defined(WIN32)
   XDeviceState *state;
   XInputClass *any;
   XValuatorState *v;
@@ -118,7 +119,6 @@ queryTabletPos(GLUTwindow * window)
   }
 end:
   XFreeDeviceState(state);
-#endif /* !WIN32 */
 }
 
 static void
@@ -143,6 +143,7 @@ tabletPosChange(GLUTwindow * window, int first, int count, int *data)
   if (genEvent)
     window->tabletMotion(window->tabletPos[0], window->tabletPos[1]);
 }
+#endif /* !WIN32 */
 
 int
 __glutProcessDeviceEvents(XEvent * event)
@@ -415,7 +416,7 @@ probeDevices(void)
   return support;
 }
 
-void 
+void
 __glutUpdateInputDeviceMask(GLUTwindow * window)
 {
 #if !defined(WIN32)
@@ -521,7 +522,7 @@ __glutUpdateInputDeviceMask(GLUTwindow * window)
 }
 
 /* CENTRY */
-int APIENTRY 
+int APIENTRY
 glutDeviceGet(GLenum param)
 {
   probeDevices();

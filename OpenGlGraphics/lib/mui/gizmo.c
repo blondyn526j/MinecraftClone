@@ -306,12 +306,12 @@ void drawtbcontents(muiObject *obj)
     }
 
     /* contents of text box */
-    uiBlack();
+    if (muiGetEnable(obj)) uiBlack(); else uiDkGray();
     uicmov2i(xmin+6, ymin+9);
     uicharstr(str, UI_FONT_FIXED_PITCH);
 
     /* Blue bar */
-    if ((obj->active == 0) || (s1 != s2)) return;
+    if ((obj->active == 0) || (obj->enable == 0) || (s1 != s2)) return;
     uiBlue();
     uimove2i(xmin+4+FONTWIDTH*s1, ymin+7); uidraw2i(xmin+4+FONTWIDTH*s1, ymax-6); uiendline();
     uimove2i(xmin+5+FONTWIDTH*s1, ymin+7); uidraw2i(xmin+5+FONTWIDTH*s1, ymax-6); uiendline();
@@ -322,11 +322,22 @@ void drawtb(muiObject *tb)
     int	xmin = tb->xmin, xmax = tb->xmax, ymin = tb->ymin;
     int 	ymax = ymin+TEXTBOXHEIGHT;
 
-    drawedges(xmin++,xmax--,ymin++,ymax--,uiDkGray,uiWhite);
-    drawedges(xmin++,xmax--,ymin++,ymax--,uiBlack,uiVyLtGray);
-    drawedges(xmin++,xmax--,ymin++,ymax--,uiLtGray,uiDkGray);
-    drawedges(xmin++,xmax--,ymin++,ymax--,uiTerraCotta,uiTerraCotta);
-    uiTerraCotta();
+    if(!muiGetVisible(tb)) return;
+    
+    if( muiGetEnable(tb) ) {
+	drawedges(xmin++,xmax--,ymin++,ymax--,uiDkGray,uiWhite);
+	drawedges(xmin++,xmax--,ymin++,ymax--,uiBlack,uiVyLtGray);
+	drawedges(xmin++,xmax--,ymin++,ymax--,uiLtGray,uiDkGray);
+	drawedges(xmin++,xmax--,ymin++,ymax--,uiTerraCotta,uiTerraCotta);
+	uiTerraCotta();
+    }
+    else {
+	drawedges(xmin++,xmax--,ymin++,ymax--,uiDkGray,uiWhite);
+	drawedges(xmin++,xmax--,ymin++,ymax--,uiMmGray,uiVyLtGray);
+	drawedges(xmin++,xmax--,ymin++,ymax--,uiLtGray,uiDkGray);
+	drawedges(xmin++,xmax--,ymin++,ymax--,uiLtGray,uiDkGray);
+	uiLtGray();
+    }
     uirectfi(xmin, ymin, xmax+1, ymax+1);
 
     drawtbcontents(tb);
@@ -365,6 +376,8 @@ enum muiReturnValue textboxhandler(muiObject *obj, int event, int value, int x, 
     int tp;
     TextBox *tb = (TextBox *)obj->object;
 
+    if( !muiGetEnable(obj) || !muiGetVisible(obj) ) return MUI_NO_ACTION;
+    
     switch (event) {
 	case MUI_DEVICE_DOWN:
 	    tp = findtp(obj, x);
@@ -416,11 +429,19 @@ void	helpdrawboldlabel(char *s, int x, int y)
 void drawlabel(muiObject *lab)
 {
     Label *l = (Label *)lab->object;
-    helpdrawlabel(l->str, lab->xmin, lab->ymin);
+    if(!muiGetVisible(lab)) return;
+    if(muiGetEnable(lab)) uiBlack(); else uiDkGray();
+    uicmov2i(lab->xmin, lab->ymin);
+    uicharstr(l->str, UI_FONT_NORMAL);
 }
 
 void drawboldlabel(muiObject *lab)
 {
     Label *l = (Label *)lab->object;
-    helpdrawboldlabel(l->str, lab->xmin, lab->ymin);
+    if(!muiGetVisible(lab)) return;
+    if(muiGetEnable(lab)) uiBlack(); else uiDkGray();
+    uicmov2i(lab->xmin, lab->ymin);     /* XXX Hack! -- no bold font in GLUT */
+    uicharstr(l->str, UI_FONT_NORMAL);
+    uicmov2i(lab->xmin+1, lab->ymin);
+    uicharstr(l->str, UI_FONT_NORMAL);
 }

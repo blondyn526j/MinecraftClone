@@ -1,4 +1,5 @@
-/* Copyright (c) Mark J. Kilgard, 1994.  */
+
+/* Copyright (c) Mark J. Kilgard, 1994, 1997.  */
 
 /* This program is freely distributable without licensing fees
    and is provided without guarantee or warrantee expressed or
@@ -10,21 +11,7 @@
 #include <assert.h>
 #if !defined(WIN32)
 #include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Xatom.h>  /* for XA_RGB_DEFAULT_MAP atom */
-#if defined(__vms)
-#include <X11/StdCmap.h>  /* for XmuLookupStandardColormap */
-#else
-#include <X11/Xmu/StdCmap.h>  /* for XmuLookupStandardColormap */
-#endif
-#endif
-
-/* SGI optimization introduced in IRIX 6.3 to avoid X server
-   round trips for interning common X atoms. */
-#if defined(_SGI_EXTRA_PREDEFINES) && !defined(NO_FAST_ATOMS)
-#include <X11/SGIFastAtom.h>
-#else
-#define XSGIFastInternAtom(dpy,string,fast_name,how) XInternAtom(dpy,string,how)
+#include <X11/Xatom.h>
 #endif
 
 #include <GL/glut.h>
@@ -128,7 +115,7 @@ __glutGetWindow(Window win)
 }
 
 /* CENTRY */
-int APIENTRY 
+int APIENTRY
 glutGetWindow(void)
 {
   if (__glutCurrentWindow) {
@@ -155,6 +142,7 @@ __glutSetWindow(GLUTwindow * window)
   glXMakeCurrent(__glutDisplay, __glutCurrentWindow->renderWin,
     __glutCurrentWindow->renderCtx);
 
+#if !defined(WIN32)
   /* We should be careful to force a finish between each
      iteration through the GLUT main loop if indirect OpenGL 
      contexts are in use; indirect contexts tend to have  much
@@ -163,6 +151,7 @@ __glutSetWindow(GLUTwindow * window)
      by posting GLUT_FINISH_WORK to be done. */
   if (!__glutCurrentWindow->isDirect)
     __glutPutOnWorkList(__glutCurrentWindow, GLUT_FINISH_WORK);
+#endif
 
   /* If debugging is enabled, we'll want to check this window
      for any OpenGL errors every iteration through the GLUT
@@ -173,7 +162,7 @@ __glutSetWindow(GLUTwindow * window)
 }
 
 /* CENTRY */
-void APIENTRY 
+void APIENTRY
 glutSetWindow(int win)
 {
   GLUTwindow *window;
@@ -230,6 +219,10 @@ getVisualInfoCI(unsigned int mode)
   int list[32];
   int i, n = 0;
 
+  /* Should not be looking at display mode mask if
+     __glutDisplayString is non-NULL. */
+  assert(!__glutDisplayString);
+
   list[n++] = GLX_BUFFER_SIZE;
   list[n++] = 1;
   if (GLUT_WIND_IS_DOUBLE(mode)) {
@@ -274,9 +267,14 @@ getVisualInfoRGB(unsigned int mode)
   int list[32];
   int n = 0;
 
+  /* Should not be looking at display mode mask if
+     __glutDisplayString is non-NULL. */
+  assert(!__glutDisplayString);
+
   /* XXX Would a caching mechanism to minize the calls to
      glXChooseVisual? You'd have to reference count
-     XVisualInfo* pointers. */
+     XVisualInfo* pointers.  Would also have to properly
+     interact with glutInitDisplayString. */
 
   list[n++] = GLX_RGBA;
   list[n++] = GLX_RED_SIZE;
@@ -352,6 +350,10 @@ __glutDetermineVisual(
 {
   XVisualInfo *vis;
 
+  /* Should not be looking at display mode mask if
+     __glutDisplayString is non-NULL. */
+  assert(!__glutDisplayString);
+
   *treatAsSingle = GLUT_WIND_IS_SINGLE(displayMode);
   vis = getVisualInfo(displayMode);
   if (!vis) {
@@ -379,146 +381,6 @@ __glutDetermineVisual(
     }
   }
   return vis;
-}
-
-void
-__glutSetupColormap(XVisualInfo * vi, GLUTcolormap ** colormap, Colormap * cmap, int isRGB)
-{
-#if defined(WIN32)
-  if (vi->dwFlags & PFD_NEED_PALETTE || vi->iPixelType==PFD_TYPE_COLORINDEX) {
-    *colormap = __glutAssociateColormap(vi);
-    *cmap = (*colormap)->cmap;
-  } else {
-    *colormap = NULL;
-    *cmap = 0;
-  }
-#else
-  Status status;
-  XStandardColormap *standardCmaps;
-  int i, numCmaps;
-  static Atom hpColorRecoveryAtom = -1;
-
-  switch (vi->class) {
-  case PseudoColor:
-    if (isRGB) {
-      /* Mesa might return a PseudoColor visual for RGB mode. */
-      *colormap = NULL;
-      if (MaxCmapsOfScreen(DefaultScreenOfDisplay(__glutDisplay)) == 1
-        && vi->visual == DefaultVisual(__glutDisplay, __glutScreen)) {
-        char *private = getenv("MESA_PRIVATE_CMAP");
-
-        if (private) {
-          /* User doesn't want to share colormaps. */
-          *cmap = XCreateColormap(__glutDisplay, __glutRoot,
-            vi->visual, AllocNone);
-        } else {
-          /* Share the root colormap. */
-          *cmap = DefaultColormap(__glutDisplay, __glutScreen);
-        }
-      } else {
-        /* Get our own PseudoColor colormap. */
-        *cmap = XCreateColormap(__glutDisplay, __glutRoot,
-          vi->visual, AllocNone);
-      }
-    } else {
-      /* CI mode, real GLX never returns a PseudoColor visual
-         for RGB mode. */
-      *colormap = __glutAssociateColormap(vi);
-      *cmap = (*colormap)->cmap;
-    }
-    break;
-  case TrueColor:
-  case DirectColor:
-    *colormap = NULL;   /* NULL if RGBA */
-
-    /* Hewlett-Packard supports a feature called "HP Color
-       Recovery". Mesa has code to use HP Color Recovery.  For
-       Mesa to use this feature, the atom
-       _HP_RGB_SMOOTH_MAP_LIST must be defined on the root
-       window AND the colormap obtainable by XGetRGBColormaps
-       for that atom must be set on the window.  If that
-       colormap is not set, the output will look stripy. */
-
-    if (hpColorRecoveryAtom == -1) {
-      char *xvendor;
-
-#define VENDOR_HP "Hewlett-Packard"
-
-      /* Only makes sense to make XInternAtom round-trip if we
-         know that we are connected to an HP X server. */
-      xvendor = ServerVendor(__glutDisplay);
-      if (!strncmp(xvendor, VENDOR_HP, sizeof(VENDOR_HP) - 1)) {
-        hpColorRecoveryAtom = XInternAtom(__glutDisplay, "_HP_RGB_SMOOTH_MAP_LIST", True);
-      } else {
-        hpColorRecoveryAtom = None;
-      }
-    }
-    if (hpColorRecoveryAtom != None) {
-      status = XGetRGBColormaps(__glutDisplay, __glutRoot,
-        &standardCmaps, &numCmaps, hpColorRecoveryAtom);
-      if (status == 1) {
-        for (i = 0; i < numCmaps; i++) {
-          if (standardCmaps[i].visualid == vi->visualid) {
-            *cmap = standardCmaps[i].colormap;
-            XFree(standardCmaps);
-            return;
-          }
-        }
-        XFree(standardCmaps);
-      }
-    }
-#ifndef SOLARIS_2_4_BUG
-    /* Solaris 2.4 has a bug in its XmuLookupStandardColormap
-       implementation.  Please compile your Solaris 2.4 version
-       of GLUT with -DSOLARIS_2_4_BUG to work around this bug.
-       The symptom of the bug is that programs will get a
-       BadMatch error from X_CreateWindow when creating a GLUT
-       window because Solaris 2.4 creates a  corrupted
-       RGB_DEFAULT_MAP property.  Note that this workaround
-       prevents Colormap sharing between applications, perhaps
-       leading unnecessary colormap installations or colormap
-       flashing. */
-    status = XmuLookupStandardColormap(__glutDisplay,
-      vi->screen, vi->visualid, vi->depth, XA_RGB_DEFAULT_MAP,
-      /* replace */ False, /* retain */ True);
-    if (status == 1) {
-      status = XGetRGBColormaps(__glutDisplay, __glutRoot,
-        &standardCmaps, &numCmaps, XA_RGB_DEFAULT_MAP);
-      if (status == 1) {
-        for (i = 0; i < numCmaps; i++) {
-          if (standardCmaps[i].visualid == vi->visualid) {
-            *cmap = standardCmaps[i].colormap;
-            XFree(standardCmaps);
-            return;
-          }
-        }
-        XFree(standardCmaps);
-      }
-    }
-#endif
-    /* If no standard colormap but TrueColor, just make a
-       private one. */
-    /* XXX Should do a better job of internal sharing for
-       privately allocated TrueColor colormaps. */
-    /* XXX DirectColor probably needs ramps hand initialized! */
-    *cmap = XCreateColormap(__glutDisplay, __glutRoot,
-      vi->visual, AllocNone);
-    break;
-  case StaticColor:
-  case StaticGray:
-  case GrayScale:
-    /* Mesa supports these visuals */
-    *colormap = NULL;
-    *cmap = XCreateColormap(__glutDisplay, __glutRoot,
-      vi->visual, AllocNone);
-    break;
-  default:
-    __glutFatalError(
-      "could not allocate colormap for visual type: %d.",
-      vi->class);
-  }
-  return;
-#endif
 }
 
 void
@@ -561,7 +423,7 @@ __glutDetermineWindowVisual(Bool * treatAsSingle, Bool * visAlloced)
     /* __glutDisplayString should be NULL except if
        glutInitDisplayString has been called to register a
        different display string.  Calling glutInitDisplayString
-       means using a string instead of an integer mask determine 
+       means using a string instead of an integer mask determine
        the visual to use. Using the function pointer variable
        __glutDetermineVisualFromString below avoids linking in
        the code for implementing glutInitDisplayString (ie,
@@ -610,8 +472,7 @@ __glutCreateWindow(GLUTwindow * parent,
     __glutFatalError(
       "visual with necessary capabilities not found.");
   }
-  __glutSetupColormap(window->vis, &window->colormap, &window->cmap,
-    GLUT_WIND_IS_RGB(__glutDisplayMode));
+  __glutSetupColormap(window->vis, &window->colormap, &window->cmap);
 #endif
   window->eventMask = StructureNotifyMask | ExposureMask;
 
@@ -629,8 +490,8 @@ __glutCreateWindow(GLUTwindow * parent,
     wa.do_not_propagate_mask = 0;
   }
 
-  /* Stash width and height before Win32's __glutAdjustCoords possibly
-     overwrites the values. */
+  /* Stash width and height before Win32's __glutAdjustCoords
+     possibly overwrites the values. */
   window->width = width;
   window->height = height;
   window->forceReshape = True;
@@ -643,7 +504,7 @@ __glutCreateWindow(GLUTwindow * parent,
     0, InputOutput, 0,
     attribMask, &wa);
   window->hdc = GetDC(window->win);
-  /* must set the XHDC for fake glXChooseVisual & fake
+  /* Must set the XHDC for fake glXChooseVisual & fake
      glXCreateContext & fake XAllocColorCells. */
   XHDC = window->hdc;
   window->vis = __glutDetermineWindowVisual(&window->treatAsSingle,
@@ -652,16 +513,12 @@ __glutCreateWindow(GLUTwindow * parent,
     __glutFatalError(
       "visual with necessary capabilities not found.");
   }
-  if (__glutDebug)
-    glXPrintPixelFormat(ChoosePixelFormat(window->hdc, window->vis), 
-			window->vis);
   if (!SetPixelFormat(window->hdc,
-		      ChoosePixelFormat(window->hdc, window->vis),
-		      window->vis))
+      ChoosePixelFormat(window->hdc, window->vis),
+      window->vis))
     __glutFatalError("SetPixelFormat() failed in glutCreateWindow().");
-  __glutSetupColormap(window->vis, &window->colormap, &window->cmap,
-		      GLUT_WIND_IS_RGB(__glutDisplayMode));
-  /* make sure subwindows get a windowStatus callback */
+  __glutSetupColormap(window->vis, &window->colormap, &window->cmap);
+  /* Make sure subwindows get a windowStatus callback. */
   if (parent)
     PostMessage(parent->win, WM_ACTIVATE, 0, 0);
 #else
@@ -674,12 +531,18 @@ __glutCreateWindow(GLUTwindow * parent,
   window->renderWin = window->win;
   window->ctx = glXCreateContext(__glutDisplay, window->vis,
     None, __glutTryDirect);
+  if (!window->ctx) {
+    __glutFatalError(
+      "failed to create OpenGL rendering context.");
+  }
   window->renderCtx = window->ctx;
+#if !defined(WIN32)
   window->isDirect = glXIsDirect(__glutDisplay, window->ctx);
   if (__glutForceDirect) {
     if (!window->isDirect)
       __glutFatalError("direct rendering not possible.");
   }
+#endif
 
   window->parent = parent;
   if (parent) {
@@ -743,108 +606,8 @@ __glutCreateWindow(GLUTwindow * parent,
   return window;
 }
 
-static int
-findColormaps(GLUTwindow * window,
-  Window * winlist, Colormap * cmaplist, int num, int max)
-{
-  GLUTwindow *child;
-  int i;
-
-  /* Do not allow more entries that maximum number of
-     colormaps! */
-  if (num >= max)
-    return num;
-  /* Is cmap for this window already on the list? */
-  for (i = 0; i < num; i++) {
-    if (cmaplist[i] == window->cmap)
-      goto normalColormapAlreadyListed;
-  }
-  /* Not found on the list; add colormap and window. */
-  winlist[num] = window->win;
-  cmaplist[num] = window->cmap;
-  num++;
-
-normalColormapAlreadyListed:
-
-  /* Repeat above but for the overlay colormap if there one. */
-  if (window->overlay) {
-    if (num >= max)
-      return num;
-    for (i = 0; i < num; i++) {
-      if (cmaplist[i] == window->overlay->cmap)
-        goto overlayColormapAlreadyListed;
-    }
-    winlist[num] = window->overlay->win;
-    cmaplist[num] = window->overlay->cmap;
-    num++;
-  }
-overlayColormapAlreadyListed:
-
-  /* Recursively search children. */
-  child = window->children;
-  while (child) {
-    num = findColormaps(child, winlist, cmaplist, num, max);
-    child = child->siblings;
-  }
-  return num;
-}
-
-void
-__glutEstablishColormapsProperty(GLUTwindow * window)
-{
-#if !defined(WIN32)
-  /* this routine is strictly X.  Win32 doesn't need to do anything of
-     this sort (but has to do other wacky stuff later). */
-  static Atom wmColormapWindows = None;
-  Window *winlist;
-  Colormap *cmaplist;
-  Status status;
-  int maxcmaps, num;
-
-  assert(!window->parent);
-  maxcmaps = MaxCmapsOfScreen(ScreenOfDisplay(__glutDisplay,
-      __glutScreen));
-  /* For portability reasons we don't use alloca for winlist
-     and cmaplist, but we could. */
-  winlist = (Window *) malloc(maxcmaps * sizeof(Window));
-  cmaplist = (Colormap *) malloc(maxcmaps * sizeof(Colormap));
-  num = findColormaps(window, winlist, cmaplist, 0, maxcmaps);
-  if (num < 2) {
-    /* Property no longer needed; remove it. */
-    wmColormapWindows = XSGIFastInternAtom(__glutDisplay,
-      "WM_COLORMAP_WINDOWS", SGI_XA_WM_COLORMAP_WINDOWS, False);
-    if (wmColormapWindows == None) {
-      __glutWarning("Could not intern X atom for WM_COLORMAP_WINDOWS.");
-      return;
-    }
-    XDeleteProperty(__glutDisplay, window->win, wmColormapWindows);
-  } else {
-    status = XSetWMColormapWindows(__glutDisplay, window->win,
-      winlist, num);
-    /* XSetWMColormapWindows should always work unless the
-       WM_COLORMAP_WINDOWS property cannot be intern'ed.  We
-       check to be safe. */
-    if (status == False)
-      __glutFatalError("XSetWMColormapWindows returned False.");
-  }
-  /* For portability reasons we don't use alloca for winlist
-     and cmaplist, but we could. */
-  free(winlist);
-  free(cmaplist);
-#endif
-}
-
-GLUTwindow *
-__glutToplevelOf(GLUTwindow * window)
-{
-  while (window->parent) {
-    window = window->parent;
-  }
-  return window;
-}
-
 /* CENTRY */
-int APIENTRY 
+int APIENTRY
 glutCreateWindow(const char *title)
 {
   static int firstWindow = 1;
@@ -885,17 +648,23 @@ glutCreateWindow(const char *title)
   return window->num + 1;
 }
 
-int APIENTRY 
+int APIENTRY
 glutCreateSubWindow(int win, int x, int y, int width, int height)
 {
-  GLUTwindow *window, *toplevel;
+  GLUTwindow *window;
 
   window = __glutCreateWindow(__glutWindowList[win - 1],
     x, y, width, height);
-  toplevel = __glutToplevelOf(window);
-  if (toplevel->cmap != window->cmap) {
-    __glutPutOnWorkList(toplevel, GLUT_COLORMAP_WORK);
+#if !defined(WIN32)
+  {
+    GLUTwindow *toplevel;
+
+    toplevel = __glutToplevelOf(window);
+    if (toplevel->cmap != window->cmap) {
+      __glutPutOnWorkList(toplevel, GLUT_COLORMAP_WORK);
+    }
   }
+#endif
   return window->num + 1;
 }
 /* ENDCENTRY */
@@ -962,7 +731,7 @@ __glutDestroyWindow(GLUTwindow * window,
 }
 
 /* CENTRY */
-void APIENTRY 
+void APIENTRY
 glutDestroyWindow(int win)
 {
   GLUTwindow *window = __glutWindowList[win - 1];
@@ -970,7 +739,8 @@ glutDestroyWindow(int win)
   if (__glutMappedMenu && __glutMenuWindow == window) {
     __glutFatalUsage("destroying menu window not allowed while menus in use");
   }
-  /* if not a toplevel window... */
+#if !defined(WIN32)
+  /* If not a toplevel window... */
   if (window->parent) {
     /* Destroying subwindows may change colormap requirements;
        recalculate toplevel window's WM_COLORMAP_WINDOWS
@@ -978,44 +748,8 @@ glutDestroyWindow(int win)
     __glutPutOnWorkList(__glutToplevelOf(window->parent),
       GLUT_COLORMAP_WORK);
   }
+#endif
   __glutDestroyWindow(window, window);
-}
-
-void APIENTRY 
-glutSwapBuffers(void)
-{
-  GLUTwindow *window = __glutCurrentWindow;
-
-  if (window->renderWin == window->win) {
-    if (__glutCurrentWindow->treatAsSingle) {
-      /* Pretend the double buffered window is single buffered,
-         so treat glutSwapBuffers as a no-op. */
-      return;
-    }
-  } else {
-    if (__glutCurrentWindow->overlay->treatAsSingle) {
-      /* Pretend the double buffered overlay is single
-         buffered, so treat glutSwapBuffers as a no-op. */
-      return;
-    }
-  }
-
-  /* For the MESA_SWAP_HACK. */
-  window->usedSwapBuffers = 1;
-
-  glXSwapBuffers(__glutDisplay, __glutCurrentWindow->renderWin);
-
-  /* I considered putting the window being swapped on the
-     GLUT_FINISH_WORK work list because you could call
-     glutSwapBuffers from an idle callback which doesn't call
-     __glutSetWindow which normally adds indirect rendering
-     windows to the GLUT_FINISH_WORK work list.  Not being put
-     on the list could lead to the buffering up of multiple
-     redisplays and buffer swaps and hamper interactivity.  I
-     consider this an application bug due to not using
-     glutPostRedisplay to trigger redraws.  If
-     glutPostRedisplay were used, __glutSetWindow would be
-     called and a glFinish to throttle buffering would occur. */
 }
 /* ENDCENTRY */
 
@@ -1040,7 +774,7 @@ __glutChangeWindowEventMask(long eventMask, Bool add)
   }
 }
 
-void APIENTRY 
+void APIENTRY
 glutDisplayFunc(GLUTdisplayCB displayFunc)
 {
   /* XXX Remove the warning after GLUT 3.0. */
@@ -1049,7 +783,7 @@ glutDisplayFunc(GLUTdisplayCB displayFunc)
   __glutCurrentWindow->display = displayFunc;
 }
 
-void APIENTRY 
+void APIENTRY
 glutKeyboardFunc(GLUTkeyboardCB keyboardFunc)
 {
   __glutChangeWindowEventMask(KeyPressMask,
@@ -1057,7 +791,7 @@ glutKeyboardFunc(GLUTkeyboardCB keyboardFunc)
   __glutCurrentWindow->keyboard = keyboardFunc;
 }
 
-void APIENTRY 
+void APIENTRY
 glutSpecialFunc(GLUTspecialCB specialFunc)
 {
   __glutChangeWindowEventMask(KeyPressMask,
@@ -1065,7 +799,7 @@ glutSpecialFunc(GLUTspecialCB specialFunc)
   __glutCurrentWindow->special = specialFunc;
 }
 
-void APIENTRY 
+void APIENTRY
 glutMouseFunc(GLUTmouseCB mouseFunc)
 {
   if (__glutCurrentWindow->mouse) {
@@ -1087,7 +821,7 @@ glutMouseFunc(GLUTmouseCB mouseFunc)
   __glutCurrentWindow->mouse = mouseFunc;
 }
 
-void APIENTRY 
+void APIENTRY
 glutMotionFunc(GLUTmotionCB motionFunc)
 {
   /* Hack.  Some window managers (4Dwm by default) will mask
@@ -1118,7 +852,7 @@ glutMotionFunc(GLUTmotionCB motionFunc)
   __glutCurrentWindow->motion = motionFunc;
 }
 
-void APIENTRY 
+void APIENTRY
 glutPassiveMotionFunc(GLUTpassiveCB passiveMotionFunc)
 {
   __glutChangeWindowEventMask(PointerMotionMask,
@@ -1133,7 +867,7 @@ glutPassiveMotionFunc(GLUTpassiveCB passiveMotionFunc)
   __glutCurrentWindow->passive = passiveMotionFunc;
 }
 
-void APIENTRY 
+void APIENTRY
 glutEntryFunc(GLUTentryCB entryFunc)
 {
   __glutChangeWindowEventMask(EnterWindowMask | LeaveWindowMask,
@@ -1144,7 +878,7 @@ glutEntryFunc(GLUTentryCB entryFunc)
   }
 }
 
-void APIENTRY 
+void APIENTRY
 glutWindowStatusFunc(GLUTwindowStatusCB windowStatusFunc)
 {
   __glutChangeWindowEventMask(VisibilityChangeMask,
@@ -1165,7 +899,7 @@ visibilityHelper(int status)
     __glutCurrentWindow->visibility(GLUT_VISIBLE);
 }
 
-void APIENTRY 
+void APIENTRY
 glutVisibilityFunc(GLUTvisibilityCB visibilityFunc)
 {
   __glutCurrentWindow->visibility = visibilityFunc;
@@ -1175,7 +909,7 @@ glutVisibilityFunc(GLUTvisibilityCB visibilityFunc)
     glutWindowStatusFunc(NULL);
 }
 
-void APIENTRY 
+void APIENTRY
 glutReshapeFunc(GLUTreshapeCB reshapeFunc)
 {
   if (reshapeFunc) {

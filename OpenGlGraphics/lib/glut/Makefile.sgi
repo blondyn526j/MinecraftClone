@@ -22,6 +22,7 @@ SRCS = \
 	glut_bitmap.c \
 	glut_bwidth.c \
 	glut_cindex.c \
+	glut_cmap.c \
 	glut_cursor.c \
 	glut_dials.c \
 	glut_dstr.c \
@@ -38,6 +39,7 @@ SRCS = \
 	glut_shapes.c \
 	glut_space.c \
 	glut_stroke.c \
+	glut_swap.c \
 	glut_swidth.c \
 	glut_tablet.c \
 	glut_teapot.c \
@@ -46,7 +48,7 @@ SRCS = \
 	glut_warp.c \
 	glut_win.c \
 	glut_winmisc.c \
-	layerutil.c \
+	layerutil.c
 
 SRCSSEMIGENS = \
 	glut_8x13.c \
@@ -57,7 +59,7 @@ SRCSSEMIGENS = \
 	glut_mroman.c \
 	glut_roman.c \
 	glut_tr10.c \
-	glut_tr24.c \
+	glut_tr24.c
 
 OBJS = $(SRCS:.c=.o) $(SRCSSEMIGENS:.c=.o)
 OTHERGENS = y.tab.c y.tab.h strokegen.c strokegen.h strokelex.c

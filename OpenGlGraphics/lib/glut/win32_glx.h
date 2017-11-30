@@ -7,11 +7,9 @@
    and is provided without guarantee or warrantee expressed or 
    implied. This program is -not- in the public domain. */
 
-
 #include "win32_x11.h"
 
-
-/* Type definitions (conversions) */
+/* Type definitions (conversions). */
 typedef HGLRC GLXContext;
 
 #define GLX_USE_GL              1       /* support GLX rendering */
@@ -35,31 +33,32 @@ typedef HGLRC GLXContext;
 #define GLX_BAD_ATTRIB  2
 #define GLX_BAD_VISUAL  4
 
-/* Function prototypes */
+/* Functions emulated by macros. */
 
-void
-glXDestroyContext(Display* display, GLXContext context);
+#define glXDestroyContext(display, context) \
+  wglDeleteContext(context)
 
-GLXContext
-glXCreateContext(Display* display, XVisualInfo* visinfo,
-		 GLXContext share, Bool direct);
+#define glXSwapBuffers(display, window) \
+  SwapBuffers(GetDC(window))
 
-Bool
-glXIsDirect(Display* display, GLXContext context);
+#define glXMakeCurrent(display, window, context) \
+  wglMakeCurrent(GetDC(window), context)
 
-void
-glXSwapBuffers(Display* display, Window window);
+/* Function prototypes. */
 
-Bool
-glXMakeCurrent(Display* display, Window window, GLXContext context);
-
-int
-glXGetConfig(Display* display, XVisualInfo* visual, int attrib, int* value);
-
-XVisualInfo*
-glXChooseVisual(Display* display, int screen, int* attribList);
-
-void
-glXPrintPixelFormat(int pf, PIXELFORMATDESCRIPTOR* pfd);
+extern GLXContext glXCreateContext(
+  Display* display,
+  XVisualInfo* visinfo,
+  GLXContext share,
+  Bool direct);
+extern int glXGetConfig(
+  Display* display,
+  XVisualInfo* visual,
+  int attrib,
+  int* value);
+extern XVisualInfo* glXChooseVisual(
+  Display* display,
+  int screen,
+  int* attribList);
 
 #endif /* __win32_glx_h__ */

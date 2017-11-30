@@ -7,9 +7,7 @@
    and is provided without guarantee or warrantee expressed or 
    implied. This program is -not- in the public domain. */
 
-
 #include <windows.h>
-
 
 /* Type definitions (conversions) */
 typedef int Visual;			/* Win32 equivalent of X11 type */
@@ -27,7 +25,6 @@ typedef int Status;
 
 #define True  TRUE			/* Win32 equivalents of X11 booleans */
 #define False FALSE
-
 
 #define None                 0L	/* universal null resource or null atom */
 
@@ -157,7 +154,6 @@ typedef int Status;
 #define NormalState 1	/* most applications want to start this way */
 #define IconicState 3	/* application wants to start as an icon */
 
-
 /* Type definitions */
 
 typedef struct {
@@ -189,108 +185,145 @@ typedef struct {
   int width, height;	/* should set so old wm's don't mess up */
 } XSizeHints;
 
+/* Functions emulated by macros. */
 
-/* Function prototypes */
+#define XFreeColormap(display, colormap) \
+  DeleteObject(colormap)
 
-Window
-XCreateWindow(Display* display, Window parent, int x, int y,
-	      unsigned int width, unsigned int height, unsigned int border,
-	      int depth, unsigned int class, Visual* visual, 
-	      unsigned long valuemask, XSetWindowAttributes* attributes);
+#define XCreateFontCursor(display, shape) \
+  LoadCursor(NULL, shape)
 
-XVisualInfo*
-XGetVisualInfo(Display* display, long mask, XVisualInfo* template, int*nitems);
+#define XDefineCursor(display, window, cursor) \
+  SetCursor(cursor)
 
-Colormap
-XCreateColormap(Display* display, Window root, Visual* visual, int alloc);
+#define XFlush(display) \
+  /* Nothing. */
 
-void
-XAllocColorCells(Display* display, Colormap colormap, Bool contig, 
-		 unsigned long plane_masks_return[], unsigned int nplanes,
-		 unsigned long pixels_return[], unsigned int npixels);
+#define DisplayWidth(display, screen) \
+  GetSystemMetrics(SM_CXSCREEN)
 
-void
-XStoreColor(Display* display, Colormap colormap, XColor* color);
+#define DisplayHeight(display, screen) \
+  GetSystemMetrics(SM_CYSCREEN)
 
-void
-XSetWindowColormap(Display* display, Window window, Colormap colormap);
+#define XMapWindow(display, window) \
+  ShowWindow(window, SW_SHOWNORMAL)
 
-void
-XFreeColormap(Display* display, Colormap colormap);
+#define XUnmapWindow(display, window) \
+  ShowWindow(window, SW_HIDE)
 
-Cursor
-XCreateFontCursor(Display* display, char* shape);
+#define XIconifyWindow(display, window, screen) \
+  ShowWindow(window, SW_MINIMIZE)
 
-void
-XDefineCursor(Display* display, Window window, Cursor cursor);
+#define XWithdrawWindow(display, window, screen) \
+  ShowWindow(window, SW_HIDE)
 
-void
-XFlush(Display* display);
+#define XLowerWindow(display, window) \
+  SetWindowPos(window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE)
 
-Bool
-XTranslateCoordinates(Display *display, Window src, Window dst, 
-		      int src_x, int src_y, 
-		      int* dest_x_return, int* dest_y_return,
-		      Window* child_return);
+#define XSetWMName(display, window, tp) \
+  SetWindowText(window, (tp)->value)
 
-Status
-XGetGeometry(Display* display, Window window, Window* root_return, 
-	     int* x_return, int* y_return, 
-	     unsigned int* width_return, unsigned int* height_return,
-	     unsigned int *border_width_return, unsigned int* depth_return);
+/* There really isn't a way to set the icon name separate from the
+   windows name in Win32, so, just set the windows name. */
+#define XSetWMIconName(display, window, tp) \
+  XSetWMName(display, window, tp)
 
-int
-DisplayWidth(Display* display, int screen);
+#define XDestroyWindow(display, window) \
+  DestroyWindow(window)
 
-int
-DisplayHeight(Display* display, int screen);
+/* Anything that needs to be freed was allocated with malloc in our
+   fake X windows library for Win32, so free it with plain old
+   free(). */
+#define XFree(data) \
+  free(data)
 
-int
-DisplayWidthMM(Display* display, int screen);
+/* Nothing to be done for this...the pointer is always 'ungrabbed'
+   in Win32. */
+#define XUngrabPointer(display, time) \
+  /* Nothing. */
 
-int
-DisplayHeightMM(Display* display, int screen);
+/* Function prototypes. */
 
-void
-XMapWindow(Display* display, Window window);
+extern Window XCreateWindow(
+  Display* display,
+  Window parent,
+  int x, int y,
+  unsigned int width, unsigned int height,
+  unsigned int border,
+  int depth,
+  unsigned int class,
+  Visual* visual, 
+  unsigned long valuemask,
+  XSetWindowAttributes* attributes);
 
-void
-XUnmapWindow(Display* display, Window window);
+extern XVisualInfo* XGetVisualInfo(
+  Display* display,
+  long mask,
+  XVisualInfo* template,
+  int*nitems);
 
-void
-XIconifyWindow(Display* display, Window window, int screen);
+extern Colormap XCreateColormap(
+  Display* display,
+  Window root,
+  Visual* visual,
+  int alloc);
 
-void
-XWithdrawWindow(Display* display, Window window, int screen);
+extern void XAllocColorCells(
+  Display* display,
+  Colormap colormap,
+  Bool contig, 
+  unsigned long plane_masks_return[],
+  unsigned int nplanes,
+  unsigned long pixels_return[],
+  unsigned int npixels);
 
-void
-XLowerWindow(Display* display, Window window);
+extern void XStoreColor(
+  Display* display,
+  Colormap colormap,
+  XColor* color);
 
-void
-XWarpPointer(Display* display, Window src, Window dst, 
-	     int src_x, int src_y, int src_width, int src_height, 
-	     int dst_x, int dst_y);
+extern void XSetWindowColormap(
+  Display* display,
+  Window window,
+  Colormap colormap);
 
-void
-XSetWMName(Display* display, Window window, XTextProperty *tp);
+extern Bool XTranslateCoordinates(
+  Display *display,
+  Window src, Window dst, 
+  int src_x, int src_y, 
+  int* dest_x_return, int* dest_y_return,
+  Window* child_return);
 
-void
-XSetWMIconName(Display* display, Window window, XTextProperty *tp);
+extern Status XGetGeometry(
+  Display* display,
+  Window window,
+  Window* root_return, 
+  int* x_return, int* y_return, 
+  unsigned int* width_return, unsigned int* height_return,
+  unsigned int *border_width_return,
+  unsigned int* depth_return);
 
-int
-XPending(Display* display);
+extern int DisplayWidthMM(
+  Display* display,
+  int screen);
 
-void
-XDestroyWindow(Display* display, Window window);
+extern int DisplayHeightMM(
+  Display* display,
+  int screen);
 
-void
-XFree(void* data);
+extern void XWarpPointer(
+  Display* display,
+  Window src, Window dst, 
+  int src_x, int src_y,
+  int src_width, int src_height, 
+  int dst_x, int dst_y);
 
-void
-XUngrabPointer(Display* display, int time);
+extern int XParseGeometry(
+  char* string,
+  int* x, int* y, 
+  unsigned int* width, unsigned int* height);
 
-int
-XParseGeometry(char* string, int* x, int* y, 
-	       unsigned int* width, unsigned int* height);
+extern int XPending(
+  Display* display);
 
 #endif /* __win32_x11_h__ */

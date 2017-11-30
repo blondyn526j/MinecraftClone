@@ -94,6 +94,7 @@ void	muiBackgroundClear(void)
     drawrestore();
 }
 
+#if 0
 void	windowborderdraw(void)
 {
     int sxsize, sysize;
@@ -125,3 +126,4 @@ void	windowborderdraw(void)
 
     drawrestore();
 }
+#endif
