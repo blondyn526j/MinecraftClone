@@ -55,5 +55,14 @@ private:
 	bool m_bufferNeedsToBeReAssigned = true;
 
 	char& m_xyzToBlock(int globalX, int globalY, int globalZ);
+
+	enum {
+		UP,
+		FRONT,
+		DOWN,
+		LEFT,
+		BACK,
+		RIGHT
+	};
 };
 

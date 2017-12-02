@@ -89,6 +89,9 @@ void Display::ReassignBuffer()
 		glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[i][TEXCOORD_VB]);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec2) * m_bufferedVertices[i], &(texCoords[i][0]));
 
+		glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[i][NORMALS_VB]);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(int) * m_bufferedVertices[i], &(normals[i][0]));
+
 		m_drawnVertices[i] = m_bufferedVertices[i]; 
 	}
 }
@@ -104,6 +107,7 @@ void Display::InitializeBuffer()
 	{
 		positions[i].reserve(bufferSize);
 		texCoords[i].reserve(bufferSize);
+		normals[i].reserve(bufferSize);
 
 		glGenVertexArrays(1, &m_vertexArrayObject[i]);
 		glBindVertexArray(m_vertexArrayObject[i]);
@@ -124,18 +128,26 @@ void Display::InitializeBuffer()
 
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+		//NORMALS
+		glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[i][NORMALS_VB]);
+		glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(GL_INT), NULL, GL_STREAM_DRAW);
+
+		glEnableVertexAttribArray(2);
+		glVertexAttribIPointer(2, 1, GL_INT, GL_FALSE, 0);
 		
 		glBindVertexArray(0);
 	}
 
 }
 
-void Display::AppendToDrawBuffer(Vertex* vertices, int numVertices, glm::vec3* offset, int type)
+void Display::AppendToDrawBuffer(Vertex* vertices, int numVertices, glm::vec3* offset, int dir, int type)
 {
 	for (int i = 0; i < numVertices; i++)
 	{
 		positions[type][m_bufferedVertices[type]] = vertices[i].pos + *offset;
 		texCoords[type][m_bufferedVertices[type]] = vertices[i].texCoord;
+		normals[type][m_bufferedVertices[type]] = dir;
 		m_bufferedVertices[type]++;
 	}
 }
