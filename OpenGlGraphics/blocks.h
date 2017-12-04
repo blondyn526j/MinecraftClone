@@ -21,7 +21,8 @@ public:
 		BLOCK_WATER,
 		BLOCK_WOOD0,
 		BLOCK_GRASSC,
-		BLOCK_SAND0
+		BLOCK_SAND0,
+		BLOCK_LEAVES0
 	};
 
 private:

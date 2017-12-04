@@ -33,6 +33,10 @@ public:
 				{
 					::ShowWindow(::GetConsoleWindow(), !::IsWindowVisible(::GetConsoleWindow()));
 				}
+				if (e.key.keysym.scancode == SDL_SCANCODE_EQUALS)
+				{
+
+				}
 			}
 		}
 

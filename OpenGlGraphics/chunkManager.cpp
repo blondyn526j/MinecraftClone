@@ -1,10 +1,10 @@
 #include "chunkManager.h"
 
-#define DRAW_DISTANCE 8
-#define BUFFERWIDTH 22
+#define DRAW_DISTANCE 9
+#define BUFFERWIDTH 20
 #define SEALEVEL 55
 #define DESERTSTEP 0.5
-#define ASYNC_LOADING 0
+#define ASYNC_LOADING 1
 
 #define INFLUENCE_CONTINENTAL 120
 #define INFLUENCE_MAJ 80
@@ -90,6 +90,11 @@ ChunkManager::ChunkManager(Blocks* blocks, Display* display)
 	m_mapVariety.SetInterp(FastNoise::Hermite);
 	m_mapVariety.SetSeed(80465);
 
+	m_mapTreeDensity.SetNoiseType(FastNoise::Perlin);
+	m_mapTreeDensity.SetFrequency(4000);
+	m_mapTreeDensity.SetInterp(FastNoise::Hermite);
+	m_mapTreeDensity.SetSeed(19135);
+
 	m_mapSandArea.SetNoiseType(FastNoise::PerlinFractal);
 	m_mapSandArea.SetFrequency(3000);
 	m_mapSandArea.SetInterp(FastNoise::Hermite);
@@ -101,7 +106,7 @@ ChunkManager::ChunkManager(Blocks* blocks, Display* display)
 	m_mapBeachHeight.SetInterp(FastNoise::Hermite);
 	m_mapBeachHeight.SetSeed(761651);
 
-	srand(624610);
+	srand(4610);
 }
 
 ChunkManager::~ChunkManager()
@@ -131,7 +136,6 @@ void ChunkManager::Draw(float x, float z)
 		UpdateBuffer(xPos, zPos);
 #endif // ASYNC_LOADING
 
-
 		m_old_xPos = xPos;
 		m_old_zPos = zPos;
 	}
@@ -142,6 +146,7 @@ void ChunkManager::Draw(float x, float z)
 		m_bufferNeedsToBeReAssigned = false;
 	}
 
+	//ReplaceBlockInFile(Blocks::BLOCK_WOOD0, x, 110 , z);
 }
 
 void ChunkManager::UpdateBuffer(int chunkX, int chunkZ)
@@ -151,19 +156,24 @@ void ChunkManager::UpdateBuffer(int chunkX, int chunkZ)
 			if (m_chunks[m_mod(x, BUFFERWIDTH) + m_mod(z, BUFFERWIDTH) * BUFFERWIDTH]->chunkRoot != glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z))
 				LoadChunkFromFile(x, z);
 
+	//GENERATING TREES
+	for (int x = chunkX - DRAW_DISTANCE + 1; x <= chunkX + DRAW_DISTANCE - 1; x++)
+		for (int z = chunkZ - DRAW_DISTANCE + 1; z <= chunkZ + DRAW_DISTANCE - 1; z++)
+		{
+			//std::cout << x << '-' << z << std::endl;
+			GenerateTrees(x, z);
+		}
+	//END GENERATING TREES
+
+	//DRAW CHUNKS
 	for (int x = chunkX - DRAW_DISTANCE; x <= chunkX + DRAW_DISTANCE; x++)
 		for (int z = chunkZ - DRAW_DISTANCE; z <= chunkZ + DRAW_DISTANCE; z++)
 		{
 			DrawChunk(x, z);
 		}
+	//END DRAWING CHUNKS
 
-	//GENERATING TREES
-	for (int x = chunkX - DRAW_DISTANCE + 1; x <= chunkX + DRAW_DISTANCE - 1; x++)
-		for (int z = chunkZ - DRAW_DISTANCE + 1; z <= chunkZ + DRAW_DISTANCE - 1; z++)
-		{
-			//GenerateTrees(x, z);
-		}
-	//END GENERATING TREES
+	//std::cout << "Trees: " << m_chunks[m_xzToChunkIndex()]
 
 	m_bufferNeedsToBeReAssigned = true;
 }
@@ -272,33 +282,35 @@ void ChunkManager::LoadChunkFromFile(int x, int z)
 
 	std::ifstream file;
 
-	file.open(path);
+	file.open(path, std::fstream::binary | std::fstream::in);
 
 	if (!file.good())
 	{
 		file.close();
 		SaveChunkToFile(x, z, GenerateChunk(x, z));
 		return;
-		//file.open(path);
 	}
 
 	char* ids = new char[CHUNKSIZE];
 
 	file.read(ids, sizeof(char) * CHUNKSIZE);
+	char* treesInput = new char[1];
+	file.read(treesInput, sizeof(char));
 
+	if(m_chunks[m_xzToChunkIndex(x, z)] != nullptr)
 	delete(m_chunks[m_xzToChunkIndex(x, z)]);
-	m_chunks[m_xzToChunkIndex(x, z)] = new Chunk(ids, glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z));
+	m_chunks[m_xzToChunkIndex(x, z)] = new Chunk(ids, glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z), treesInput[0] == 't' ? true : false);
 
 	file.close();
-
 }
 
 void ChunkManager::SaveChunkToFile(int x, int z, Chunk* chunk)
 {
 	std::ofstream file;
-	file.open("world/" + std::to_string(x) + 'x' + std::to_string(z) + ".chf");
+	file.open("world/" + std::to_string(x) + 'x' + std::to_string(z) + ".chf", std::fstream::binary | std::fstream::out);
 
 	file.write(chunk->blockIDs, sizeof(char) * CHUNKSIZE);
+	file.write((chunk->treesGenerated ? "t" : "f"), sizeof(char));
 
 	file.close();
 	std::cout << "Chunk Saved " << x << 'x' << z << std::endl;
@@ -419,14 +431,31 @@ int ChunkManager::GetGroudLevel(double x, double z)
 
 void ChunkManager::GenerateTrees(int chunkX, int chunkZ)
 {
+	if (m_chunks[m_xzToChunkIndex(chunkX, chunkZ)]->treesGenerated)
+		return;
+
+	m_chunks[m_xzToChunkIndex(chunkX, chunkZ)]->treesGenerated = true;
+	SetTreesGeneratedInFile(chunkX, chunkZ);
+
 	double xCoord = 0;
 	double zCoord = 0;
-	int blockX = rand()%16;
-	int blockZ = rand()%16;
+	for (int blockX = 0; blockX < 16; blockX++)
+		for (int blockZ = 0; blockZ < 16; blockZ++)
+		{
+			GetCoordsOnMap(chunkX, chunkZ, blockX, blockZ, xCoord, zCoord);
+			int groundLevel = GetGroudLevel(xCoord, zCoord);
+			if (groundLevel >= SEALEVEL)
+			{
+				double valTreeDensity = m_mapTreeDensity.GetNoise(xCoord, zCoord) * 20;
+				int random = rand() % 500;
+				if (random < valTreeDensity)
+				{
+					GenerateStructure(Structure::TREE0, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
+					//std::cout << random << '-' << valTreeDensity << std::endl;
+				}
+			}
 
-	GetCoordsOnMap(chunkX, chunkZ, blockX, blockZ, xCoord, zCoord);
-
-	GenerateStructure(Structure::TREE0, chunkX * CHUNKWIDTH + blockX, GetGroudLevel(xCoord, zCoord), chunkZ * CHUNKWIDTH + blockZ);
+		}
 }
 
 void ChunkManager::GenerateStructure(int type, int globalX, int globalY, int globalZ)
@@ -435,7 +464,32 @@ void ChunkManager::GenerateStructure(int type, int globalX, int globalY, int glo
 	for (int i = 0; i < structure->length; i < ++i)
 	{
 		m_xyzToBlock(globalX + structure->offsets[i].x, globalY + structure->offsets[i].y, globalZ + structure->offsets[i].z) = structure->ids[i];
+		ReplaceBlockInFile((char)type, globalX + structure->offsets[i].x, globalY + structure->offsets[i].y, globalZ + structure->offsets[i].z);
 	}
+}
+
+void ChunkManager::ReplaceBlockInFile(char c, int globalX, int globalY, int globalZ)
+{
+	std::string path = "world/" + std::to_string((int)floor((double)globalX / CHUNKWIDTH)) + 'x' + std::to_string((int)floor((double)globalZ / CHUNKWIDTH)) + ".chf";
+
+	std::fstream file;
+	file.open(path, std::fstream::binary | std::fstream::out | std::fstream::in);
+	char writeBuffer[] = { c };
+	file.seekp(m_xyzToIndex(globalX, globalY, globalZ));
+	file.write(writeBuffer, sizeof(char));
+	file.close();
+}
+
+void ChunkManager::SetTreesGeneratedInFile(int chunkX, int chunkZ)
+{
+	std::string path = "world/" + std::to_string((int)floor((double)chunkX / CHUNKWIDTH)) + 'x' + std::to_string((int)floor((double)chunkZ / CHUNKWIDTH)) + ".chf";
+
+	std::fstream file;
+	file.open(path, std::fstream::binary | std::fstream::out | std::fstream::in);
+	char writeBuffer[] = { 't' };
+	file.seekp(CHUNKWIDTH*CHUNKWIDTH*CHUNKHEIGHT);
+	file.write(writeBuffer, sizeof(char));
+	file.close();
 }
 
 bool ChunkManager::isTransparent(int idOther, int idThis)

@@ -33,6 +33,8 @@ private:
 	void GenerateStructure(int type, int x, int y, int z);
 	void GenerateTrees(int x, int z);
 	int GetGroudLevel(double x, double z); /*GLOBAL*/
+	void ReplaceBlockInFile(char c, int globalX, int globalY, int globalZ);
+	void SetTreesGeneratedInFile(int globalX, int globalZ);
 	Blocks* m_blocks;
 	Display* m_display;
 	std::vector<Chunk*> m_chunks;
@@ -47,6 +49,7 @@ private:
 	FastNoise m_mapVariety;
 	FastNoise m_mapSandArea;
 	FastNoise m_mapBeachHeight;
+	FastNoise m_mapTreeDensity;
 
 	std::thread m_loadingThread;
 
