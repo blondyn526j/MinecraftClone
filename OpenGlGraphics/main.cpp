@@ -25,13 +25,13 @@
 bool isClosed = false;
 Display display(WIDTH, HEIGHT, "Hello Screen");
 Camera camera(glm::vec3(8.0f, 100.0, 8.0f), 80.0f, (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
-Blocks blocks(7);
+Blocks blocks(8);
 Input input(&isClosed);
 
 Shader shader("./res/basicShader");
 Shader waveShader("./res/waveShader");
 
-Texture texture("./res/Texture.jpg");
+Texture texture("./res/Texture.png");
 Transform transform;
 
 ChunkManager chunkManager(&blocks, &display);

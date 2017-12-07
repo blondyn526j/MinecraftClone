@@ -1,6 +1,6 @@
 #include "chunkManager.h"
 
-#define DRAW_DISTANCE 9
+#define DRAW_DISTANCE 6
 #define BUFFERWIDTH 20
 #define SEALEVEL 55
 #define DESERTSTEP 0.5
@@ -450,7 +450,7 @@ void ChunkManager::GenerateTrees(int chunkX, int chunkZ)
 				int random = rand() % 500;
 				if (random < valTreeDensity)
 				{
-					GenerateStructure(Structure::TREE0, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
+					GenerateStructure(Structures::FLOWER_PURPLE, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
 					//std::cout << random << '-' << valTreeDensity << std::endl;
 				}
 			}
@@ -460,22 +460,59 @@ void ChunkManager::GenerateTrees(int chunkX, int chunkZ)
 
 void ChunkManager::GenerateStructure(int type, int globalX, int globalY, int globalZ)
 {
-	Structure* structure = m_structures[0];
+	std::string oldPath = "000";
+	Structure* structure = m_structures[type];
+	std::fstream file;
+
 	for (int i = 0; i < structure->length; i < ++i)
 	{
 		m_xyzToBlock(globalX + structure->offsets[i].x, globalY + structure->offsets[i].y, globalZ + structure->offsets[i].z) = structure->ids[i];
-		ReplaceBlockInFile((char)type, globalX + structure->offsets[i].x, globalY + structure->offsets[i].y, globalZ + structure->offsets[i].z);
+
+		int chunkX = floor((double)globalX / CHUNKWIDTH);
+		int chunkZ = floor((double)globalZ / CHUNKWIDTH);
+
+		int blockX = m_mod(globalX, CHUNKWIDTH);
+		int blockZ = m_mod(globalZ, CHUNKWIDTH);
+		int blockY = globalY;
+
+		std::string path = "world/" + std::to_string(chunkX) + 'x' + std::to_string(chunkZ) + ".chf";
+
+		if (path != oldPath)
+		{
+			if(file.is_open())
+			file.close();
+
+			file.open(path, std::fstream::binary | std::fstream::out | std::fstream::in);
+		}
+		//file.open(path, std::fstream::binary | std::fstream::out | std::fstream::in);
+		char writeBuffer[] = { (char)type };
+
+		file.seekp(m_xyzToIndex(blockX, blockY, blockZ));
+		file.write(writeBuffer, sizeof(char));
+
+		oldPath = path;
+		//ReplaceBlockInFile((char)type, globalX + structure->offsets[i].x, globalY + structure->offsets[i].y, globalZ + structure->offsets[i].z);
 	}
 }
 
 void ChunkManager::ReplaceBlockInFile(char c, int globalX, int globalY, int globalZ)
 {
-	std::string path = "world/" + std::to_string((int)floor((double)globalX / CHUNKWIDTH)) + 'x' + std::to_string((int)floor((double)globalZ / CHUNKWIDTH)) + ".chf";
+	///USELESS
+	int chunkX = floor((double)globalX / CHUNKWIDTH);
+	int chunkZ = floor((double)globalZ / CHUNKWIDTH);
+
+	int blockX = m_mod(globalX, CHUNKWIDTH);
+	int blockZ = m_mod(globalZ, CHUNKWIDTH);
+	int blockY = globalY;
+
+	std::string path = "world/" + std::to_string(chunkX) + 'x' + std::to_string(chunkZ) + ".chf";
 
 	std::fstream file;
 	file.open(path, std::fstream::binary | std::fstream::out | std::fstream::in);
 	char writeBuffer[] = { c };
-	file.seekp(m_xyzToIndex(globalX, globalY, globalZ));
+
+
+	file.seekp(m_xyzToIndex(blockX, blockY, blockZ));
 	file.write(writeBuffer, sizeof(char));
 	file.close();
 }
@@ -494,6 +531,9 @@ void ChunkManager::SetTreesGeneratedInFile(int chunkX, int chunkZ)
 
 bool ChunkManager::isTransparent(int idOther, int idThis)
 {
+	if (idOther == Blocks::BLOCK_FLOWER_PURPLE)
+		return true;
+
 	if (idOther != idThis && (idOther == Blocks::BLOCK_AIR || idOther == Blocks::BLOCK_WATER))
 		return true;
 	else

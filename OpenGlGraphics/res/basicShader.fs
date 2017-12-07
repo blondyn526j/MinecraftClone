@@ -29,6 +29,11 @@ void main()
 	normal = vec3(-1,1,0.5);
 
 	vec4 tex = texture2D(diffuse, texCoord0);
+
+	if(tex.a < 0.9)
+	discard;
+	else
+	{
 	//vec4 tex = vec4(1, 0, 0, 1);
 	tex = vec4( tex.xyz * (0.65 + 0.35 * 
 	clamp(
@@ -37,5 +42,7 @@ void main()
 	//normal, normalize(vec3(0.2, abs(cos(timer0/2.0)), 0.1))),
 	-1,1)), 1.0);
 	gl_FragColor = tex;
-	//gl_FragColor = vec4(0.0, 1.0, 1.0, 1.0);
+	//gl_FragColor = vec4(0.0, 1.0, 1.0, 1.0);	
+	}
+
 }

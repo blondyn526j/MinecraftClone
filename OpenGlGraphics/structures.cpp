@@ -3,7 +3,7 @@
 
 Structures::Structures()
 {
-	structures.reserve(1);
+	structures.reserve(2);
 	structures.push_back(Structure(15));
 
 	structures[0].ids.push_back(Blocks::BLOCK_WOOD0);
@@ -50,6 +50,11 @@ Structures::Structures()
 
 	structures[0].ids.push_back(Blocks::BLOCK_LEAVES0);
 	structures[0].offsets.push_back(glm::vec3(-1, 6, 1));
+
+	structures.push_back(Structure(1));
+	structures[1].ids.push_back(Blocks::BLOCK_FLOWER_PURPLE);
+	structures[1].offsets.push_back(glm::vec3(0, 0, 0));
+
 }
 
 

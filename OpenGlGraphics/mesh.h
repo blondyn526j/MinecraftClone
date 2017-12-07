@@ -26,12 +26,6 @@ public:
 		if (t < 0)
 			return -1;
 
-		//bool positive = false;
-		//double firstPtDot = glm::dot(rayDir, glm::cross((rayOrigin - vertices[0].pos), (rayOrigin - vertices[1].pos)));
-		//if (firstPtDot <= 0) return -1;
-		//else if (firstPtDot < 0) positive = false;
-		//else return -1;
-
 		for (int i = 0; i < 4; i++)
 		{
 			int nextPoint = (i + 1) % 4;

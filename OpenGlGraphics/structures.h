@@ -9,11 +9,6 @@
 class Structure
 {
 public:
-	enum
-	{
-		TREE0
-	};
-
 	Structure(int lenght)
 	{
 		this->length = lenght;
@@ -29,6 +24,12 @@ public:
 class Structures
 {
 public:
+	enum
+	{
+		TREE0,
+		FLOWER_PURPLE
+	};
+
 	Structures();
 	virtual ~Structures();
 
