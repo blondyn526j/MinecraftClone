@@ -27,7 +27,9 @@ public:
 	enum
 	{
 		TREE0,
-		FLOWER_PURPLE
+		TREE1,
+		FLOWER_PURPLE,
+		CACTUS
 	};
 
 	Structures();

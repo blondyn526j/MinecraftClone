@@ -1,6 +1,6 @@
 #include "chunk.h"
 
-Chunk::Chunk(char* ids, glm::vec3 chunkRoot, bool treesGenerated)
+Chunk::Chunk(char* ids, glm::vec3 chunkRoot, bool structuresGenerated)
 {
 	blockIDs = ids;
 	/*m_shader = shader;
@@ -8,7 +8,7 @@ Chunk::Chunk(char* ids, glm::vec3 chunkRoot, bool treesGenerated)
 	m_blocks = blocks;
 	m_display = display;*/
 	this->chunkRoot = chunkRoot;
-	this->treesGenerated = treesGenerated;
+	this->structuresGenerated = structuresGenerated;
 
 	//m_visiblilityArray = new char[CHUNKSIZE];
 }
