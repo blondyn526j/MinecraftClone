@@ -25,6 +25,7 @@ private:
 	enum
 	{
 		TRANSFORM_U,
+		CAM_POSITION,
 
 		NUM_UNIFORMS
 	};

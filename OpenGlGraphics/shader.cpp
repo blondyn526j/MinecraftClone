@@ -23,6 +23,8 @@ Shader::Shader(const std::string fileName)
 	CheckShaderError(m_program, GL_VALIDATE_STATUS, true, "Error: Program is Invalid: ");
 
 	m_uniforms[TRANSFORM_U] = glGetUniformLocation(m_program, "transform");
+	m_uniforms[CAM_POSITION] = glGetUniformLocation(m_program, "camPosition");
+
 	m_timer = glGetUniformLocation(m_program, "timer");
 }
 
@@ -45,6 +47,7 @@ void Shader::Update(Transform &transform, const Camera &camera)
 {
 	glm::mat4 model = camera.GetViewProjectoin() * transform.GetModel();
 	glUniformMatrix4fv(m_uniforms[0], 1, GL_FALSE, &model[0][0]);
+	glUniform3f(m_uniforms[CAM_POSITION], camera.position.x, camera.position.y, camera.position.z);
 
 	if(m_timer != -1)
 	glUniform1f(m_timer, timer);

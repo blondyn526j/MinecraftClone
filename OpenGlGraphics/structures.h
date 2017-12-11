@@ -29,7 +29,8 @@ public:
 		TREE0,
 		TREE1,
 		FLOWER_PURPLE,
-		CACTUS
+		CACTUS, 
+		BUSH0
 	};
 
 	Structures();

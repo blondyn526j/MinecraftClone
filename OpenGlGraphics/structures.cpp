@@ -77,6 +77,10 @@ Structures::Structures()
 
 	structures[CACTUS].ids.push_back(Blocks::BLOCK_CACTUS);
 	structures[CACTUS].offsets.push_back(glm::vec3(0, 1, 0));
+
+	structures.push_back(Structure(1));
+	structures[BUSH0].ids.push_back(Blocks::BLOCK_BUSH0);
+	structures[BUSH0].offsets.push_back(glm::vec3(0, 0, 0));
 }
 
 

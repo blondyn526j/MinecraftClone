@@ -6,8 +6,8 @@
 #define DESERTSTEP 0.5
 #define ASYNC_LOADING 1
 
-#define INFLUENCE_CONTINENTAL 120
-#define INFLUENCE_MAJ 80
+#define INFLUENCE_CONTINENTAL 100
+#define INFLUENCE_MAJ 120
 #define INFLUENCE_MED 70
 #define INFLUENCE_MIN 1.5
 
@@ -66,7 +66,7 @@ ChunkManager::ChunkManager(Blocks* blocks, Display* display)
 	m_mapHeightContinental.SetSeed(1075434);
 
 	m_mapHeightMaj.SetNoiseType(FastNoise::Perlin);
-	m_mapHeightMaj.SetFrequency(8000);
+	m_mapHeightMaj.SetFrequency(6000);
 	m_mapHeightMaj.SetInterp(FastNoise::Hermite);
 	m_mapHeightMaj.SetSeed(108134);
 
@@ -90,10 +90,15 @@ ChunkManager::ChunkManager(Blocks* blocks, Display* display)
 	m_mapVariety.SetInterp(FastNoise::Hermite);
 	m_mapVariety.SetSeed(80465);
 
+	m_mapFoliageDensity.SetNoiseType(FastNoise::Perlin);
+	m_mapFoliageDensity.SetFrequency(3500);
+	m_mapFoliageDensity.SetInterp(FastNoise::Hermite);
+	m_mapFoliageDensity.SetSeed(19135);
+
 	m_mapTreeDensity.SetNoiseType(FastNoise::Perlin);
-	m_mapTreeDensity.SetFrequency(4000);
+	m_mapTreeDensity.SetFrequency(3500);
 	m_mapTreeDensity.SetInterp(FastNoise::Hermite);
-	m_mapTreeDensity.SetSeed(19135);
+	m_mapTreeDensity.SetSeed(98515);
 
 	m_mapSandArea.SetNoiseType(FastNoise::PerlinFractal);
 	m_mapSandArea.SetFrequency(3000);
@@ -228,7 +233,7 @@ void ChunkManager::DrawChunk(int ax, int az)
 						m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[12], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot), DOWN, (chunk->blockIDs[blocksDrawn] != 3) ? Display::SOLID : Display::LIQUID);
 
 					if (y == CHUNKHEIGHT - 1 || isTransparent(chunk->blockIDs[blocksDrawn + CHUNKWIDTH*CHUNKWIDTH], chunk->blockIDs[blocksDrawn]))
-						m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[0], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot), DOWN, (chunk->blockIDs[blocksDrawn] != 3) ? Display::SOLID : Display::LIQUID);
+						m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[0], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot), UP, (chunk->blockIDs[blocksDrawn] != 3) ? Display::SOLID : Display::LIQUID);
 
 					if (z == 0)
 					{
@@ -449,7 +454,25 @@ void ChunkManager::GenerateTrees(int chunkX, int chunkZ)
 			if (groundLevel >= SEALEVEL)
 			{
 				double valTreeDensity = m_mapTreeDensity.GetNoise(xCoord, zCoord) * 20 + 4;
-				int random = rand() % 1000;
+				double valFoliageDensity = m_mapFoliageDensity.GetNoise(xCoord, zCoord) * 20 + 5;
+				int random = rand() % 400;
+				if (random < valFoliageDensity)
+				{
+					switch (m_xyzToBlock(chunkX * CHUNKWIDTH + blockX, groundLevel - 1, chunkZ * CHUNKWIDTH + blockZ))
+					{
+					case Blocks::BLOCK_SAND0:
+						break;
+
+					case Blocks::BLOCK_GRASS0:
+						random = rand();
+						if (random % 4 == 0)
+							GenerateStructure(Structures::FLOWER_PURPLE, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
+						else
+							GenerateStructure(Structures::BUSH0, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
+						break;
+					}
+				}
+				random = rand() % 1000;
 				if (random < valTreeDensity)
 				{
 					switch (m_xyzToBlock(chunkX * CHUNKWIDTH + blockX, groundLevel - 1, chunkZ * CHUNKWIDTH + blockZ))
@@ -460,15 +483,18 @@ void ChunkManager::GenerateTrees(int chunkX, int chunkZ)
 					break;
 
 					case Blocks::BLOCK_GRASS0:
-						if (rand() % 2 != 0)
+						random = rand();
+						if (random % 3 == 0)
 						GenerateStructure(Structures::TREE0, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
-						else
+						else if (random % 3 == 1)
 						GenerateStructure(Structures::TREE1, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
+						else
+						GenerateStructure(Structures::BUSH0, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
 						break;
 					}
 					//GenerateStructure(Structures::CACTUS, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
 					//std::cout << random << '-' << valTreeDensity << std::endl;
-				}
+				}				
 			}
 
 		}
@@ -547,7 +573,7 @@ void ChunkManager::SetTreesGeneratedInFile(int chunkX, int chunkZ)
 
 bool ChunkManager::isTransparent(int idOther, int idThis)
 {
-	if (idOther == Blocks::BLOCK_FLOWER_PURPLE || idOther == Blocks::BLOCK_CACTUS)
+	if (idOther == Blocks::BLOCK_FLOWER_PURPLE || idOther == Blocks::BLOCK_CACTUS || idOther == Blocks::BLOCK_BUSH0)
 		return true;
 
 	if (idOther != idThis && (idOther == Blocks::BLOCK_AIR || idOther == Blocks::BLOCK_WATER))

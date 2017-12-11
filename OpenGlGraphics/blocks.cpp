@@ -13,6 +13,7 @@ Blocks::Blocks(int numBlocks)
 		switch (i + 1)
 		{
 		case Blocks::BLOCK_FLOWER_PURPLE:
+		case Blocks::BLOCK_BUSH0:
 			cubeVertices = new Vertex[36]{
 			//UP
 			Vertex(glm::vec3(0, 0.75, 1), glm::vec2(b,0)),//0

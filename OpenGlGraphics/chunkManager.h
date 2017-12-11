@@ -50,6 +50,7 @@ private:
 	FastNoise m_mapSandArea;
 	FastNoise m_mapBeachHeight;
 	FastNoise m_mapTreeDensity;
+	FastNoise m_mapFoliageDensity;
 
 	std::thread m_loadingThread;
 
@@ -63,9 +64,9 @@ private:
 		UP,
 		FRONT,
 		DOWN,
-		LEFT,
+		RIGHT,
 		BACK,
-		RIGHT
+		LEFT
 	};
 };
 
