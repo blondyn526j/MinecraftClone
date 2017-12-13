@@ -19,12 +19,10 @@
 #include <GLFW/glfw3.h>
 #include <sdl2\SDL.h>
 
-#define WIDTH 1280
-#define HEIGHT 720
 
 bool isClosed = false;
-Display display(WIDTH, HEIGHT, "Hello Screen");
-Camera camera(glm::vec3(8.0f, 100.0, 8.0f), 80.0f, (float)WIDTH / (float)HEIGHT, 0.01f, 1000.0f);
+Display display(width, height, "Hello Screen");
+Camera camera(glm::vec3(8.0f, 100.0, 8.0f), 80.0f, (float)width / (float)height, 0.01f, 1000.0f);
 Blocks blocks(10);
 Input input(&isClosed);
 
@@ -64,9 +62,9 @@ int main(int argc, char** argv)
 		/*double t = cube.RayFaceIntersectionTEST(camera.position, camera.forward, glm::vec3(0, 0, -1), cubeVertices);
 		std::cout << t << std::endl;
 		if(t == -1)
-			display.Clear(0.6f, 0.15f, 0.2f, 1.0f);
+		display.Clear(0.6f, 0.15f, 0.2f, 1.0f);
 		else
-			display.Clear(0.15f, 0.6f, 0.15f, 1.0f);*/
+		display.Clear(0.15f, 0.6f, 0.15f, 1.0f);*/
 
 		//RAYCAST TEST END
 
@@ -77,7 +75,7 @@ int main(int argc, char** argv)
 
 		chunkManager.Draw(camera.position.x, camera.position.z);
 		display.DrawBuffer(Display::SOLID);
-		
+
 		waveShader.Bind();
 		waveShader.Update(transform, camera);
 
@@ -101,8 +99,8 @@ void ReadConsoleCommand()
 		//std::cout << command << std::endl;
 		//std::cout << sValue << std::endl;
 
-		if(command == "loadWorld")
-		chunkManager.LoadWorld();
+		if (command == "loadWorld")
+			chunkManager.LoadWorld();
 		//else if(command == "saveChunk")
 		//chunkManager.SaveChunkToFile(0, 0);
 		else

@@ -92,7 +92,7 @@ void Display::ReassignBuffer()
 		glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[i][NORMALS_VB]);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(int) * m_bufferedVertices[i], &(normals[i][0]));
 
-		m_drawnVertices[i] = m_bufferedVertices[i]; 
+		m_drawnVertices[i] = m_bufferedVertices[i];
 	}
 }
 
@@ -115,7 +115,7 @@ void Display::InitializeBuffer()
 
 		glGenBuffers(NUM_BUFFERS, m_vertexArrayBuffers[i]);
 		glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[i][POSITION_VB]);
-		glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(glm::vec3), NULL, GL_STREAM_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(glm::vec3), NULL, GL_DYNAMIC_COPY);
 
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -124,14 +124,14 @@ void Display::InitializeBuffer()
 
 		//glGenBuffers(NUM_BUFFERS, m_vertexArrayBuffers);
 		glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[i][TEXCOORD_VB]);
-		glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(glm::vec2), NULL, GL_STREAM_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(glm::vec2), NULL, GL_DYNAMIC_COPY);
 
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
 		//NORMALS
 		glBindBuffer(GL_ARRAY_BUFFER, m_vertexArrayBuffers[i][NORMALS_VB]);
-		glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(GL_INT), NULL, GL_STREAM_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, bufferSize * sizeof(GL_INT), NULL, GL_DYNAMIC_COPY);
 
 		glEnableVertexAttribArray(2);
 		glVertexAttribIPointer(2, 1, GL_INT, GL_FALSE, 0);

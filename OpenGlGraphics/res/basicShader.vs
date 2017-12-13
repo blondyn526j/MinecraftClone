@@ -1,4 +1,4 @@
-#version 130
+#version 330
 
 varying vec2 texCoord0;
 flat out int normal0;

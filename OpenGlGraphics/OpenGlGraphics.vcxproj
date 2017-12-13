@@ -168,6 +168,7 @@
     <ClInclude Include="chunkManager.h" />
     <ClInclude Include="display.h" />
     <ClInclude Include="FastNoise.h" />
+    <ClInclude Include="globals.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="mesh.h" />

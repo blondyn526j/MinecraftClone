@@ -1,10 +1,9 @@
 #include "chunkManager.h"
+#include "globals.h"
 
-#define DRAW_DISTANCE 8
-#define BUFFERWIDTH 20
+int bufferWidth = 10;
 #define SEALEVEL 55
 #define DESERTSTEP 0.5
-#define ASYNC_LOADING 1
 
 #define INFLUENCE_CONTINENTAL 100
 #define INFLUENCE_MAJ 120
@@ -22,7 +21,7 @@ int m_xyzToIndex(const int x, const int y, const int z)
 
 int m_xzToChunkIndex(int x, int z)
 {
-	return m_mod(x, BUFFERWIDTH) + BUFFERWIDTH * m_mod(z, BUFFERWIDTH);
+	return m_mod(x, bufferWidth) + bufferWidth * m_mod(z, bufferWidth);
 }
 
 double m_clamp(const double val, const double max, const double min)
@@ -52,12 +51,14 @@ char& ChunkManager::m_xyzToBlock(int globalX, int globalY, int globalZ)
 
 ChunkManager::ChunkManager(Blocks* blocks, Display* display)
 {
+	bufferWidth = 2 * drawDistance;
+	std::cout << "Async Loading " << asyncLoading << std::endl;
 	m_blocks = blocks;
 	m_display = display;
 	m_structures = Structures();
 
-	m_chunks.reserve(BUFFERWIDTH * BUFFERWIDTH);
-	for (int i = 0; i < BUFFERWIDTH * BUFFERWIDTH; i++)
+	m_chunks.reserve(bufferWidth * bufferWidth);
+	for (int i = 0; i < bufferWidth * bufferWidth; i++)
 		m_chunks.push_back(nullptr);
 
 	m_mapHeightContinental.SetNoiseType(FastNoise::Perlin);
@@ -135,11 +136,11 @@ void ChunkManager::Draw(float x, float z)
 		if (m_loadingThread.joinable())
 			m_loadingThread.join();
 
-#if ASYNC_LOADING
-		m_loadingThread = std::thread(&ChunkManager::UpdateBuffer, this, xPos, zPos);
-#else
-		UpdateBuffer(xPos, zPos);
-#endif // ASYNC_LOADING
+		if (asyncLoading)
+			m_loadingThread = std::thread(&ChunkManager::UpdateBuffer, this, xPos, zPos);
+		else
+			UpdateBuffer(xPos, zPos);
+		// ASYNC_LOADING
 
 		m_old_xPos = xPos;
 		m_old_zPos = zPos;
@@ -156,14 +157,14 @@ void ChunkManager::Draw(float x, float z)
 
 void ChunkManager::UpdateBuffer(int chunkX, int chunkZ)
 {
-	for (int x = chunkX - DRAW_DISTANCE; x <= chunkX + DRAW_DISTANCE; x++)
-		for (int z = chunkZ - DRAW_DISTANCE; z <= chunkZ + DRAW_DISTANCE; z++)
-			if (m_chunks[m_mod(x, BUFFERWIDTH) + m_mod(z, BUFFERWIDTH) * BUFFERWIDTH]->chunkRoot != glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z))
+	for (int x = chunkX - drawDistance; x <= chunkX + drawDistance; x++)
+		for (int z = chunkZ - drawDistance; z <= chunkZ + drawDistance; z++)
+			if (m_chunks[m_mod(x, bufferWidth) + m_mod(z, bufferWidth) * bufferWidth]->chunkRoot != glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z))
 				LoadChunkFromFile(x, z);
 
 	//GENERATING TREES
-	for (int x = chunkX - DRAW_DISTANCE + 1; x <= chunkX + DRAW_DISTANCE - 1; x++)
-		for (int z = chunkZ - DRAW_DISTANCE + 1; z <= chunkZ + DRAW_DISTANCE - 1; z++)
+	for (int x = chunkX - drawDistance + 1; x <= chunkX + drawDistance - 1; x++)
+		for (int z = chunkZ - drawDistance + 1; z <= chunkZ + drawDistance - 1; z++)
 		{
 			//std::cout << x << '-' << z << std::endl;
 			GenerateTrees(x, z);
@@ -171,8 +172,8 @@ void ChunkManager::UpdateBuffer(int chunkX, int chunkZ)
 	//END GENERATING TREES
 
 	//DRAW CHUNKS
-	for (int x = chunkX - DRAW_DISTANCE; x <= chunkX + DRAW_DISTANCE; x++)
-		for (int z = chunkZ - DRAW_DISTANCE; z <= chunkZ + DRAW_DISTANCE; z++)
+	for (int x = chunkX - drawDistance; x <= chunkX + drawDistance; x++)
+		for (int z = chunkZ - drawDistance; z <= chunkZ + drawDistance; z++)
 		{
 			DrawChunk(x, z);
 		}
@@ -185,7 +186,7 @@ void ChunkManager::UpdateBuffer(int chunkX, int chunkZ)
 
 void ChunkManager::DrawChunk(int ax, int az)
 {
-	Chunk* chunk = m_chunks[m_mod(ax, BUFFERWIDTH) + m_mod(az, BUFFERWIDTH) * BUFFERWIDTH];
+	Chunk* chunk = m_chunks[m_mod(ax, bufferWidth) + m_mod(az, bufferWidth) * bufferWidth];
 	int blocksDrawn = 0;
 	for (int y = 0; y < CHUNKHEIGHT; y++)
 	{
@@ -203,7 +204,7 @@ void ChunkManager::DrawChunk(int ax, int az)
 					//5 - LEFT - 30
 					if (x == CHUNKWIDTH - 1)
 					{
-						if (isTransparent(m_chunks[m_mod(ax + 1, BUFFERWIDTH) + m_mod(az, BUFFERWIDTH) * BUFFERWIDTH]->blockIDs[blocksDrawn + 1 - CHUNKWIDTH], chunk->blockIDs[blocksDrawn]))
+						if (isTransparent(m_chunks[m_mod(ax + 1, bufferWidth) + m_mod(az, bufferWidth) * bufferWidth]->blockIDs[blocksDrawn + 1 - CHUNKWIDTH], chunk->blockIDs[blocksDrawn]))
 							m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[18], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot), RIGHT, Display::SOLID);
 					}
 					else
@@ -216,7 +217,7 @@ void ChunkManager::DrawChunk(int ax, int az)
 
 					if (x == 0)
 					{
-						if (isTransparent(m_chunks[m_mod(ax - 1, BUFFERWIDTH) + m_mod(az, BUFFERWIDTH) * BUFFERWIDTH]->blockIDs[blocksDrawn - 1 + CHUNKWIDTH], chunk->blockIDs[blocksDrawn]))
+						if (isTransparent(m_chunks[m_mod(ax - 1, bufferWidth) + m_mod(az, bufferWidth) * bufferWidth]->blockIDs[blocksDrawn - 1 + CHUNKWIDTH], chunk->blockIDs[blocksDrawn]))
 							m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[30], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot), LEFT, Display::SOLID);
 					}
 					else
@@ -237,7 +238,7 @@ void ChunkManager::DrawChunk(int ax, int az)
 
 					if (z == 0)
 					{
-						if (isTransparent(m_chunks[m_mod(ax, BUFFERWIDTH) + m_mod(az - 1, BUFFERWIDTH) * BUFFERWIDTH]->blockIDs[blocksDrawn + CHUNKWIDTH * (CHUNKWIDTH - 1)], chunk->blockIDs[blocksDrawn]))
+						if (isTransparent(m_chunks[m_mod(ax, bufferWidth) + m_mod(az - 1, bufferWidth) * bufferWidth]->blockIDs[blocksDrawn + CHUNKWIDTH * (CHUNKWIDTH - 1)], chunk->blockIDs[blocksDrawn]))
 							m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[6], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot), FRONT, Display::SOLID);
 					}
 					else
@@ -250,7 +251,7 @@ void ChunkManager::DrawChunk(int ax, int az)
 
 					if (z == CHUNKWIDTH - 1)
 					{
-						if (isTransparent(m_chunks[m_mod(ax, BUFFERWIDTH) + m_mod(az + 1, BUFFERWIDTH) * BUFFERWIDTH]->blockIDs[blocksDrawn - CHUNKWIDTH * (CHUNKWIDTH - 1)], chunk->blockIDs[blocksDrawn]))
+						if (isTransparent(m_chunks[m_mod(ax, bufferWidth) + m_mod(az + 1, bufferWidth) * bufferWidth]->blockIDs[blocksDrawn - CHUNKWIDTH * (CHUNKWIDTH - 1)], chunk->blockIDs[blocksDrawn]))
 							m_display->AppendToDrawBuffer(&(*m_blocks)[chunk->blockIDs[blocksDrawn]]->vertices[24], 6, &(glm::vec3(x, y, z) + chunk->chunkRoot), BACK, Display::SOLID);
 					}
 					else
@@ -274,8 +275,8 @@ void ChunkManager::DrawChunk(int ax, int az)
 
 void ChunkManager::LoadWorld()
 {
-	for (int x = 0; x < BUFFERWIDTH; x++)
-		for (int z = 0; z < BUFFERWIDTH; z++)
+	for (int x = 0; x < bufferWidth; x++)
+		for (int z = 0; z < bufferWidth; z++)
 		{
 			LoadChunkFromFile(x, z);
 		}
@@ -351,22 +352,22 @@ Chunk* ChunkManager::GenerateChunk(int x, int z)
 
 					/*if (ay < SEALEVEL + 2 + valBeachHeight * 4)
 					{
-						double sandRand = (double)(rand() % 200 - 100) * 0.0003;
-						if(valSandArea > 0.03)
-							ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_SAND0;
-						else if(valSandArea < -0.03)
-							ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASS0;
-						else if(sandRand < valSandArea)
-							ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_SAND0;
-						else
-							ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASS0;
+					double sandRand = (double)(rand() % 200 - 100) * 0.0003;
+					if(valSandArea > 0.03)
+					ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_SAND0;
+					else if(valSandArea < -0.03)
+					ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASS0;
+					else if(sandRand < valSandArea)
+					ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_SAND0;
+					else
+					ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASS0;
 					}
 					else
 					{
-						if (valVar > DESERTSTEP)
-							ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASS0;
-						else
-							ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASS1;
+					if (valVar > DESERTSTEP)
+					ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASS0;
+					else
+					ids[m_xyzToIndex(ax, ay, az)] = Blocks::BLOCK_GRASS1;
 					}*/
 
 				}
@@ -383,27 +384,24 @@ Chunk* ChunkManager::GenerateChunk(int x, int z)
 	/*
 	for (int az = 0; az < CHUNKWIDTH; az++)
 	{
-		for (int ax = 0; ax < CHUNKWIDTH; ax++)
-		{
-			double xCoord = 0;
-			double zCoord = 0;
-			GetCoordsOnMap(x, z, ax, az, xCoord, zCoord);
-			double valTemp = (m_mapTemp.GetNoise(xCoord, zCoord) + 1) / 2;
-			double valSandArea = m_mapSandArea.GetNoise(xCoord, zCoord);
-			double valBeachHeight = m_mapBeachHeight.GetNoise(xCoord, zCoord);
-
-			int groundLevel = GetGroudLevel(xCoord, zCoord);
-
-			if (ax == 0 && az == 0)
-			{
-				Structure* structure = m_structures[0];
-				for (int i = 0; i < structure->length; i < i++)
-				{
-					ids[m_xyzToIndex(ax + structure->offsets[i].x, groundLevel + structure->offsets[i].y, az + structure->offsets[i].z)] = structure->ids[i];
-				}
-			}
-
-		}
+	for (int ax = 0; ax < CHUNKWIDTH; ax++)
+	{
+	double xCoord = 0;
+	double zCoord = 0;
+	GetCoordsOnMap(x, z, ax, az, xCoord, zCoord);
+	double valTemp = (m_mapTemp.GetNoise(xCoord, zCoord) + 1) / 2;
+	double valSandArea = m_mapSandArea.GetNoise(xCoord, zCoord);
+	double valBeachHeight = m_mapBeachHeight.GetNoise(xCoord, zCoord);
+	int groundLevel = GetGroudLevel(xCoord, zCoord);
+	if (ax == 0 && az == 0)
+	{
+	Structure* structure = m_structures[0];
+	for (int i = 0; i < structure->length; i < i++)
+	{
+	ids[m_xyzToIndex(ax + structure->offsets[i].x, groundLevel + structure->offsets[i].y, az + structure->offsets[i].z)] = structure->ids[i];
+	}
+	}
+	}
 	}*/
 
 	delete(m_chunks[m_xzToChunkIndex(x, z)]);
@@ -478,23 +476,23 @@ void ChunkManager::GenerateTrees(int chunkX, int chunkZ)
 					switch (m_xyzToBlock(chunkX * CHUNKWIDTH + blockX, groundLevel - 1, chunkZ * CHUNKWIDTH + blockZ))
 					{
 					case Blocks::BLOCK_SAND0:
-						if(rand() % 3 == 0)
-						GenerateStructure(Structures::CACTUS, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
-					break;
+						if (rand() % 3 == 0)
+							GenerateStructure(Structures::CACTUS, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
+						break;
 
 					case Blocks::BLOCK_GRASS0:
 						random = rand();
 						if (random % 3 == 0)
-						GenerateStructure(Structures::TREE0, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
+							GenerateStructure(Structures::TREE0, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
 						else if (random % 3 == 1)
-						GenerateStructure(Structures::TREE1, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
+							GenerateStructure(Structures::TREE1, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
 						else
-						GenerateStructure(Structures::BUSH0, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
+							GenerateStructure(Structures::BUSH0, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
 						break;
 					}
 					//GenerateStructure(Structures::CACTUS, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
 					//std::cout << random << '-' << valTreeDensity << std::endl;
-				}				
+				}
 			}
 
 		}
