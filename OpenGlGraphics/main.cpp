@@ -22,9 +22,11 @@
 
 bool isClosed = false;
 Display display(width, height, "Hello Screen");
-Camera camera(glm::vec3(8.0f, 100.0, 8.0f), 80.0f, (float)width / (float)height, 0.01f, 1000.0f);
 Blocks blocks(10);
 Input input(&isClosed);
+
+ChunkManager chunkManager(&blocks, &display);
+Camera camera(glm::vec3(8.0f, 100.0, 8.0f), 80.0f, (float)width / (float)height, 0.01f, 1000.0f);
 
 Shader shader("./res/basicShader");
 Shader waveShader("./res/waveShader");
@@ -32,7 +34,6 @@ Shader waveShader("./res/waveShader");
 Texture texture("./res/Texture.png");
 Transform transform;
 
-ChunkManager chunkManager(&blocks, &display);
 
 int main(int argc, char** argv)
 {
@@ -47,13 +48,12 @@ int main(int argc, char** argv)
 	display.InitializeBuffer();
 
 
-
 	while (!isClosed)
 	{
 		//INPUT TEST
 		input.Update();
 
-		camera.Update(input.vertical, input.horizontal, input.xMouse, input.yMouse);
+		camera.Update(&input);
 
 		//INPUT TEST END
 

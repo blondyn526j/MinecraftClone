@@ -1,12 +1,12 @@
 #include "chunk.h"
-
+/*
 Chunk::Chunk(char* ids, glm::vec3 chunkRoot, bool structuresGenerated)
 {
 	blockIDs = ids;
 	/*m_shader = shader;
 	m_transform = transform;
 	m_blocks = blocks;
-	m_display = display;*/
+	m_display = display;
 	this->chunkRoot = chunkRoot;
 	this->structuresGenerated = structuresGenerated;
 
@@ -17,7 +17,7 @@ Chunk::~Chunk()
 {
 	delete[](blockIDs);
 }
-
+*/
 /*
 void Chunk::DrawChunk()
 {

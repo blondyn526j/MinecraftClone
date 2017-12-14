@@ -1,7 +1,4 @@
 #pragma once
-#include "chunk.h"
-#include "shader.h"
-#include "transform.h"
 #include "blocks.h"
 #include "display.h"
 #include "FastNoise.h"
@@ -15,6 +12,35 @@
 #include <thread>
 #include <glm/glm.hpp> 
 
+#define CHUNKWIDTH 16
+#define CHUNKHEIGHT 256
+#define CHUNKSIZE CHUNKWIDTH*CHUNKWIDTH*CHUNKHEIGHT
+
+class Chunk
+{
+public:
+	int chunkSize = 8;
+	bool structuresGenerated = false;
+	Chunk(char* ids, glm::vec3 chunkRoot, bool structuresGenerated = false)
+	{
+		blockIDs = ids;
+		/*m_shader = shader;
+		m_transform = transform;
+		m_blocks = blocks;
+		m_display = display;*/
+		this->chunkRoot = chunkRoot;
+		this->structuresGenerated = structuresGenerated;
+
+		//m_visiblilityArray = new char[CHUNKSIZE];
+	}
+	virtual ~Chunk() {};
+
+	char* blockIDs;
+
+	glm::vec3 chunkRoot = glm::vec3(0, 0, 0);
+private:
+};
+
 class ChunkManager
 {
 public:
@@ -26,6 +52,7 @@ public:
 	Chunk* GenerateChunk(int x, int z);
 	void Draw(float x, float z);
 
+	char& m_xyzToBlock(int globalX, int globalY, int globalZ);
 private:
 	//Chunk* m_chunk;
 	void DrawChunk(int ax, int az);
@@ -58,8 +85,6 @@ private:
 	Structures m_structures;
 	bool m_bufferNeedsToBeReAssigned = true;
 
-	char& m_xyzToBlock(int globalX, int globalY, int globalZ);
-
 	enum {
 		UP,
 		FRONT,
@@ -69,4 +94,3 @@ private:
 		LEFT
 	};
 };
-

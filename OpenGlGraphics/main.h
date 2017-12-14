@@ -10,6 +10,7 @@ int width = 800;
 int height = 600;
 int drawDistance = 4;
 bool asyncLoading = true;
+bool noclip = false;
 
 bool ReadConfigFile()
 {
@@ -33,6 +34,10 @@ bool ReadConfigFile()
 	file >> tempS;
 	file >> tempI;
 	drawDistance = tempI;
+
+	file >> tempS;
+	file >> tempI;
+	noclip = (tempI == 1) ? true : false;
 
 	file.close();
 	return true;
