@@ -26,6 +26,20 @@ Shader::Shader(const std::string fileName)
 	m_uniforms[CAM_POSITION] = glGetUniformLocation(m_program, "camPosition");
 
 	m_timer = glGetUniformLocation(m_program, "timer");
+
+	GLuint m_diffuseTexLoc = glGetUniformLocation(m_program, "diffuseMap");
+	GLuint m_normalTexLoc = glGetUniformLocation(m_program, "normalMap");
+
+	if (m_diffuseTexLoc == -1)
+		std::cout << "Diffuse Tex Location Not Found!" << fileName << std::endl;
+
+	if (m_normalTexLoc == -1)
+		std::cout << "Normal Tex Location Not Found! " << fileName << std::endl;
+
+	glUseProgram(m_program);
+
+	glUniform1i(m_diffuseTexLoc, 0);
+	glUniform1i(m_normalTexLoc, 1);
 }
 
 Shader::~Shader()

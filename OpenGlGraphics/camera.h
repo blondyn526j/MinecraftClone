@@ -65,7 +65,12 @@ public:
 			m_velocity.y = 0.19;
 		}
 
-		//position += forward * SPEED * vertical + left * SPEED * horizontal;
+		if (chunkManager.m_xyzToBlock(position.x + m_velocity.x, position.y - 1, position.z) != Blocks::BLOCK_AIR)
+			m_velocity.x = 0;
+
+		if (chunkManager.m_xyzToBlock(position.x, position.y - 1, position.z + m_velocity.z) != Blocks::BLOCK_AIR)
+			m_velocity.z = 0;
+
 		position += m_velocity;
 	}
 

@@ -2,7 +2,7 @@
 #include "globals.h"
 
 int bufferWidth = 10;
-#define SEALEVEL 55
+#define SEALEVEL 57
 #define DESERTSTEP 0.5
 
 #define INFLUENCE_CONTINENTAL 100
@@ -35,10 +35,13 @@ void GetCoordsOnMap(int chunkX, int chunkZ, int blockX, int blockZ, double& xCoo
 	zCoord = (double)(chunkZ * CHUNKWIDTH + blockZ) / 1000000;
 }
 
-char& ChunkManager::m_xyzToBlock(int globalX, int globalY, int globalZ)
+char& ChunkManager::m_xyzToBlock(float globalX, float globalY, float globalZ)
 {
-	int chunkX = floor((double)globalX / CHUNKWIDTH);
-	int chunkZ = floor((double)globalZ / CHUNKWIDTH);
+	globalX = floor(globalX);
+	globalZ = floor(globalZ);
+
+	int chunkX = floor(globalX / CHUNKWIDTH);
+	int chunkZ = floor(globalZ / CHUNKWIDTH);
 
 	int blockX = m_mod(globalX, CHUNKWIDTH);
 	int blockZ = m_mod(globalZ, CHUNKWIDTH);
@@ -476,8 +479,11 @@ void ChunkManager::GenerateTrees(int chunkX, int chunkZ)
 					switch (m_xyzToBlock(chunkX * CHUNKWIDTH + blockX, groundLevel - 1, chunkZ * CHUNKWIDTH + blockZ))
 					{
 					case Blocks::BLOCK_SAND0:
-						if (rand() % 3 == 0)
+						random = rand();
+						if (random % 4 == 0)
 							GenerateStructure(Structures::CACTUS, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
+						else
+							GenerateStructure(Structures::BUSH_D, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
 						break;
 
 					case Blocks::BLOCK_GRASS0:
@@ -571,7 +577,7 @@ void ChunkManager::SetTreesGeneratedInFile(int chunkX, int chunkZ)
 
 bool ChunkManager::isTransparent(int idOther, int idThis)
 {
-	if (idOther == Blocks::BLOCK_FLOWER_PURPLE || idOther == Blocks::BLOCK_CACTUS || idOther == Blocks::BLOCK_BUSH0)
+	if (idOther == Blocks::BLOCK_FLOWER_PURPLE || idOther == Blocks::BLOCK_CACTUS || idOther == Blocks::BLOCK_BUSH0 || idOther == Blocks::BLOCK_BUSH1)
 		return true;
 
 	if (idOther != idThis && (idOther == Blocks::BLOCK_AIR || idOther == Blocks::BLOCK_WATER))

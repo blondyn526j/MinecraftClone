@@ -33,7 +33,10 @@ public:
 
 		//m_visiblilityArray = new char[CHUNKSIZE];
 	}
-	virtual ~Chunk() {};
+	virtual ~Chunk() 
+	{
+		delete[] blockIDs;
+	};
 
 	char* blockIDs;
 
@@ -52,7 +55,7 @@ public:
 	Chunk* GenerateChunk(int x, int z);
 	void Draw(float x, float z);
 
-	char& m_xyzToBlock(int globalX, int globalY, int globalZ);
+	char& m_xyzToBlock(float globalX, float globalY, float globalZ);
 private:
 	//Chunk* m_chunk;
 	void DrawChunk(int ax, int az);

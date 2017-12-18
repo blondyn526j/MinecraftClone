@@ -3,7 +3,6 @@
 #include <cassert>
 #include <iostream>
 
-
 Texture::Texture(const std::string &fileName)
 {
 	int width, height, numComponents;
@@ -24,6 +23,8 @@ Texture::Texture(const std::string &fileName)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
 
 	stbi_image_free(imageData);
+
+
 }
 
 Texture::~Texture()
@@ -35,6 +36,7 @@ void Texture::Bind(unsigned int unit)
 {
 	assert(unit >= 0 && unit <= 31);
 
-	glActiveTexture(GL_TEXTURE + unit);
+	glActiveTexture(GL_TEXTURE0 + unit);
 	glBindTexture(GL_TEXTURE_2D, m_texture);
+
 }

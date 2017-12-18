@@ -4,8 +4,6 @@
 #include <vector>
 #include <glm/glm.hpp>
 
-#define NUM_STRUCTURES 1
-
 class Structure
 {
 public:
@@ -30,7 +28,10 @@ public:
 		TREE1,
 		FLOWER_PURPLE,
 		CACTUS, 
-		BUSH0
+		BUSH0,
+		BUSH_D,
+
+		NUM_STRUCTURES
 	};
 
 	Structures();

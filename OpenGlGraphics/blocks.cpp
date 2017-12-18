@@ -1,8 +1,9 @@
 #include "blocks.h"
 #include <iostream>
 
-Blocks::Blocks(int numBlocks)
+Blocks::Blocks()
 {
+	int numBlocks = NUM_BLOCKS - 1;
 	m_meshes.reserve(numBlocks);
 	for (int i = 0; i < numBlocks; i++)
 	{
@@ -14,6 +15,7 @@ Blocks::Blocks(int numBlocks)
 		{
 		case Blocks::BLOCK_FLOWER_PURPLE:
 		case Blocks::BLOCK_BUSH0:
+		case Blocks::BLOCK_BUSH1:
 			cubeVertices = new Vertex[36]{
 			//UP
 			Vertex(glm::vec3(0, 0.75, 1), glm::vec2(b,0)),//0

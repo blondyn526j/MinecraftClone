@@ -22,7 +22,7 @@
 
 bool isClosed = false;
 Display display(width, height, "Hello Screen");
-Blocks blocks(10);
+Blocks blocks;
 Input input(&isClosed);
 
 ChunkManager chunkManager(&blocks, &display);
@@ -32,6 +32,7 @@ Shader shader("./res/basicShader");
 Shader waveShader("./res/waveShader");
 
 Texture texture("./res/Texture.png");
+Texture normalTexture("./res/NormalMap.png");
 Transform transform;
 
 
@@ -47,6 +48,8 @@ int main(int argc, char** argv)
 	chunkManager.LoadWorld();
 	display.InitializeBuffer();
 
+	texture.Bind(0);
+	normalTexture.Bind(1);
 
 	while (!isClosed)
 	{
@@ -69,7 +72,6 @@ int main(int argc, char** argv)
 		//RAYCAST TEST END
 
 		shader.Bind();
-		texture.Bind(0);
 
 		shader.Update(transform, camera);
 

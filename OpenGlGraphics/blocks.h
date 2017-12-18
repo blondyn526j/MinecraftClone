@@ -6,7 +6,7 @@
 class Blocks
 {
 public:
-	Blocks(int numBlocks);
+	Blocks();
 	virtual ~Blocks();
 	Mesh* operator[](int ID)
 	{
@@ -25,7 +25,10 @@ public:
 		BLOCK_LEAVES0,
 		BLOCK_FLOWER_PURPLE,
 		BLOCK_CACTUS,
-		BLOCK_BUSH0
+		BLOCK_BUSH0,
+		BLOCK_BUSH1,
+		BLOCK_LEAVES_S,
+		NUM_BLOCKS
 	};
 
 private:

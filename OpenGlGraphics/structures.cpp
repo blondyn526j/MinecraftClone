@@ -3,7 +3,7 @@
 
 Structures::Structures()
 {
-	structures.reserve(4);
+	structures.reserve(NUM_STRUCTURES);
 	structures.push_back(Structure(15));
 
 	structures[TREE0].ids.push_back(Blocks::BLOCK_WOOD0);
@@ -81,6 +81,11 @@ Structures::Structures()
 	structures.push_back(Structure(1));
 	structures[BUSH0].ids.push_back(Blocks::BLOCK_BUSH0);
 	structures[BUSH0].offsets.push_back(glm::vec3(0, 0, 0));
+
+
+	structures.push_back(Structure(1));
+	structures[BUSH_D].ids.push_back(Blocks::BLOCK_BUSH1);
+	structures[BUSH_D].offsets.push_back(glm::vec3(0, 0, 0));
 }
 
 

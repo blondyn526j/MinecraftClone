@@ -8,3 +8,6 @@ extern int drawDistance;
 extern bool noclip;
 
 extern ChunkManager chunkManager;
+class Shader;
+extern Shader shader;
+extern Shader waveShader;
