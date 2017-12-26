@@ -67,55 +67,55 @@ ChunkManager::ChunkManager(Blocks* blocks, Display* display)
 	m_mapHeightContinental.SetNoiseType(FastNoise::Perlin);
 	m_mapHeightContinental.SetFrequency(850);
 	m_mapHeightContinental.SetInterp(FastNoise::Hermite);
-	m_mapHeightContinental.SetSeed(1075434);
+	m_mapHeightContinental.SetSeed(m_seed);
 
 	m_mapHeightMaj.SetNoiseType(FastNoise::Perlin);
 	m_mapHeightMaj.SetFrequency(6000);
 	m_mapHeightMaj.SetInterp(FastNoise::Hermite);
-	m_mapHeightMaj.SetSeed(108134);
+	m_mapHeightMaj.SetSeed(m_seed * 1.2 + 1269);
 
 	m_mapHeightMed.SetNoiseType(FastNoise::PerlinFractal);
 	m_mapHeightMed.SetFrequency(8000);
 	m_mapHeightMed.SetInterp(FastNoise::Hermite);
-	m_mapHeightMed.SetSeed(9663);
+	m_mapHeightMed.SetSeed(m_seed * 0.9 - 1597);
 
 	m_mapHeightMin.SetNoiseType(FastNoise::Perlin);
 	m_mapHeightMin.SetFrequency(110000);
 	m_mapHeightMin.SetInterp(FastNoise::Hermite);
-	m_mapHeightMin.SetSeed(626685);
+	m_mapHeightMin.SetSeed((m_seed % 10912) * 8.4);
 
 	m_mapTemp.SetNoiseType(FastNoise::Perlin);
 	m_mapTemp.SetFrequency(800);
 	m_mapTemp.SetInterp(FastNoise::Hermite);
-	m_mapTemp.SetSeed(626685);
+	m_mapTemp.SetSeed(m_seed * 3.4 - m_seed % 1027);
 
 	m_mapVariety.SetNoiseType(FastNoise::Perlin);
 	m_mapVariety.SetFrequency(3000);
 	m_mapVariety.SetInterp(FastNoise::Hermite);
-	m_mapVariety.SetSeed(80465);
+	m_mapVariety.SetSeed(m_seed * 1.4 - m_seed % 98765);
 
 	m_mapFoliageDensity.SetNoiseType(FastNoise::Perlin);
 	m_mapFoliageDensity.SetFrequency(3500);
 	m_mapFoliageDensity.SetInterp(FastNoise::Hermite);
-	m_mapFoliageDensity.SetSeed(19135);
+	m_mapFoliageDensity.SetSeed(m_seed + 1897);
 
 	m_mapTreeDensity.SetNoiseType(FastNoise::Perlin);
 	m_mapTreeDensity.SetFrequency(3500);
 	m_mapTreeDensity.SetInterp(FastNoise::Hermite);
-	m_mapTreeDensity.SetSeed(98515);
+	m_mapTreeDensity.SetSeed(pow(m_seed, 2.1) - 185);
 
 	m_mapSandArea.SetNoiseType(FastNoise::PerlinFractal);
 	m_mapSandArea.SetFrequency(3000);
 	m_mapSandArea.SetInterp(FastNoise::Hermite);
-	m_mapSandArea.SetSeed(73651);
+	m_mapSandArea.SetSeed(10983102 % max(1, m_seed) + m_seed * 0.1);
 	m_mapSandArea.SetFractalOctaves(5);
 
 	m_mapBeachHeight.SetNoiseType(FastNoise::Perlin);
 	m_mapBeachHeight.SetFrequency(18000);
 	m_mapBeachHeight.SetInterp(FastNoise::Hermite);
-	m_mapBeachHeight.SetSeed(761651);
+	m_mapBeachHeight.SetSeed(m_seed * 0.123 + 687431);
 
-	srand(4610);
+	srand(m_seed * 124 - m_seed % 987);
 }
 
 ChunkManager::~ChunkManager()
@@ -319,7 +319,7 @@ void ChunkManager::SaveChunkToFile(int x, int z, Chunk* chunk)
 	file.write((chunk->structuresGenerated ? "t" : "f"), sizeof(char));
 
 	file.close();
-	std::cout << "Chunk Saved " << x << 'x' << z << std::endl;
+	//std::cout << "Chunk Saved " << x << 'x' << z << std::endl;
 }
 
 Chunk* ChunkManager::GenerateChunk(int x, int z)

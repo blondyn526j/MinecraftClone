@@ -88,6 +88,7 @@ private:
 	Structures m_structures;
 	bool m_bufferNeedsToBeReAssigned = true;
 	bool m_loadingThreadRunning = false;
+	int m_seed = 643329;
 
 	enum {
 		UP,
