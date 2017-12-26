@@ -87,6 +87,7 @@ private:
 	bool isTransparent(int idOther, int idThis);
 	Structures m_structures;
 	bool m_bufferNeedsToBeReAssigned = true;
+	bool m_loadingThreadRunning = false;
 
 	enum {
 		UP,

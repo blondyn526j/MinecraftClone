@@ -1,6 +1,6 @@
 #pragma once
 
-#define SPEED 0.13f
+#define SPEED 0.15f
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>

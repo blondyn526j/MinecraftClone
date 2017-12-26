@@ -124,15 +124,18 @@ ChunkManager::~ChunkManager()
 
 void ChunkManager::Draw(float x, float z)
 {
-	//std::cout << x << " " << z << std::endl;
-
 	m_display->Clear(0.7f + (m_mapTemp.GetNoise(x / 1000000, z / 1000000)) * 0.5, 0.9f + (m_mapTemp.GetNoise(x / 1000000, z / 1000000)) * 0.08, 0.98f, 1.0f);
-	//std::cout << 2 * (m_mapTemp.GetNoise(x / 1000000, z / 1000000)) << std::endl;
 
 	int xPos = floor((double)x / CHUNKWIDTH);
 	int zPos = floor((double)z / CHUNKWIDTH);
 
-	if (xPos != m_old_xPos || zPos != m_old_zPos)
+	if (m_bufferNeedsToBeReAssigned)
+	{
+		m_display->ReassignBuffer();
+		m_bufferNeedsToBeReAssigned = false;
+	}
+
+	if ((xPos != m_old_xPos || zPos != m_old_zPos) && !m_loadingThreadRunning)
 	{
 		m_display->ClearBuffer();
 
@@ -148,18 +151,11 @@ void ChunkManager::Draw(float x, float z)
 		m_old_xPos = xPos;
 		m_old_zPos = zPos;
 	}
-
-	if (m_bufferNeedsToBeReAssigned)
-	{
-		m_display->ReassignBuffer();
-		m_bufferNeedsToBeReAssigned = false;
-	}
-
-	//ReplaceBlockInFile(Blocks::BLOCK_WOOD0, x, 110 , z);
 }
 
 void ChunkManager::UpdateBuffer(int chunkX, int chunkZ)
 {
+	m_loadingThreadRunning = true;
 	for (int x = chunkX - drawDistance; x <= chunkX + drawDistance; x++)
 		for (int z = chunkZ - drawDistance; z <= chunkZ + drawDistance; z++)
 			if (m_chunks[m_mod(x, bufferWidth) + m_mod(z, bufferWidth) * bufferWidth]->chunkRoot != glm::vec3(CHUNKWIDTH * x, 0, CHUNKWIDTH * z))
@@ -185,6 +181,7 @@ void ChunkManager::UpdateBuffer(int chunkX, int chunkZ)
 	//std::cout << "Trees: " << m_chunks[m_xzToChunkIndex()]
 
 	m_bufferNeedsToBeReAssigned = true;
+	m_loadingThreadRunning = false;
 }
 
 void ChunkManager::DrawChunk(int ax, int az)
@@ -494,6 +491,9 @@ void ChunkManager::GenerateTrees(int chunkX, int chunkZ)
 							GenerateStructure(Structures::TREE1, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
 						else
 							GenerateStructure(Structures::BUSH0, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
+						break;
+					case Blocks::BLOCK_GRASSC:
+						GenerateStructure(Structures::TREE_C, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
 						break;
 					}
 					//GenerateStructure(Structures::CACTUS, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);

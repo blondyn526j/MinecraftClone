@@ -30,6 +30,7 @@ public:
 		CACTUS, 
 		BUSH0,
 		BUSH_D,
+		TREE_C,
 
 		NUM_STRUCTURES
 	};
