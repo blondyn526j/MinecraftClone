@@ -114,6 +114,12 @@
     <None Include="res\waveShader.vs">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="res\postShader.fs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\postShader.vs">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\Texture.jpg">

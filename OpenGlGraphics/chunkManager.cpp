@@ -124,7 +124,13 @@ ChunkManager::~ChunkManager()
 
 void ChunkManager::Draw(float x, float z)
 {
-	m_display->Clear(0.7f + (m_mapTemp.GetNoise(x / 1000000, z / 1000000)) * 0.5, 0.9f + (m_mapTemp.GetNoise(x / 1000000, z / 1000000)) * 0.08, 0.98f, 1.0f);
+	//TEST
+	//Vertex v[4] = {Vertex(glm::vec3(0, 0, 0)}
+	//std::cout << Mesh::RayFaceIntersectionTEST(camPosition, camForward, m_c);
+
+	//
+	//m_display->Clear(0.7f + (m_mapTemp.GetNoise(x / 1000000, z / 1000000)) * 0.5, 0.9f + (m_mapTemp.GetNoise(x / 1000000, z / 1000000)) * 0.08, 0.98f, 1.0f);
+	m_display->Clear(0.7f, 0.9f, 0.98f, 1.0f);
 
 	int xPos = floor((double)x / CHUNKWIDTH);
 	int zPos = floor((double)z / CHUNKWIDTH);
@@ -420,7 +426,7 @@ int ChunkManager::GetGroudLevel(double x, double z)
 	double valMaj = m_clamp(m_mapHeightMaj.GetNoise(x, z) + 0.5, 1, 0.02);
 	double valMed = m_clamp((m_mapHeightMed.GetNoise(x, z) + 0.5) / 2, 1, 0);
 	double valMin = m_mapHeightMin.GetNoise(x, z) + 0.5;
-	double valVar = m_clamp(m_mapVariety.GetNoise(x, z) + 0.5, 1.5, 0);
+	double valVar = m_clamp(m_mapVariety.GetNoise(x, z) + 0.48, 1.5, 0);
 
 	int groundLevel =
 		INFLUENCE_CONTINENTAL * valContinental +
@@ -485,12 +491,14 @@ void ChunkManager::GenerateTrees(int chunkX, int chunkZ)
 
 					case Blocks::BLOCK_GRASS0:
 						random = rand();
-						if (random % 3 == 0)
+						if (random % 4 == 0)
 							GenerateStructure(Structures::TREE0, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
-						else if (random % 3 == 1)
+						else if (random % 4 == 1)
 							GenerateStructure(Structures::TREE1, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
-						else
+						else if(random % 4 == 2)
 							GenerateStructure(Structures::BUSH0, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
+						else
+							GenerateStructure(Structures::TREE2, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);
 						break;
 					case Blocks::BLOCK_GRASSC:
 						GenerateStructure(Structures::TREE_C, chunkX * CHUNKWIDTH + blockX, groundLevel, chunkZ * CHUNKWIDTH + blockZ);

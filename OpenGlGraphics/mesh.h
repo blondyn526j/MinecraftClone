@@ -15,8 +15,12 @@ public:
 	virtual ~Mesh();
 	void Draw();
 
-	float RayFaceIntersectionTEST(const glm::vec3 rayOrigin, const glm::vec3 rayDir, const glm::vec3 normal, Vertex *vertices)
+	static float RayFaceIntersectionTEST(const glm::vec3 rayOrigin, const glm::vec3 rayDir, Vertex *vertices)
 	{
+		glm::vec3 U = vertices[1].pos - vertices[0].pos;
+		glm::vec3 V = vertices[2].pos - vertices[0].pos;
+		glm::vec3 normal = glm::vec3(U.y*V.z - U.z*V.y, U.z*V.x - U.x*V.z, U.x*V.y - U.y*V.x);
+
 		float rayDotNorm = glm::dot(rayDir, normal);
 		if (rayDotNorm == 0)
 			return -1;

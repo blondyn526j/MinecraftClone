@@ -31,6 +31,8 @@ public:
 		BUSH0,
 		BUSH_D,
 		TREE_C,
+		TREE2,
+		TREE_C2,
 
 		NUM_STRUCTURES
 	};

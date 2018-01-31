@@ -30,9 +30,11 @@ Camera camera(glm::vec3(8.0f, 100.0, 8.0f), 80.0f, (float)width / (float)height,
 
 Shader shader("./res/basicShader");
 Shader waveShader("./res/waveShader");
+Shader postShader("./res/postShader");
 
 Texture texture("./res/Texture.png");
 Texture normalTexture("./res/NormalMap.png");
+
 Transform transform;
 
 
@@ -50,6 +52,10 @@ int main(int argc, char** argv)
 
 	texture.Bind(0);
 	normalTexture.Bind(1);
+	glActiveTexture(GL_TEXTURE0 + 2);
+	glBindTexture(GL_TEXTURE_2D, display.m_texColor);
+	glActiveTexture(GL_TEXTURE0 + 3);
+	glBindTexture(GL_TEXTURE_2D, display.m_texDepth);
 
 	while (!isClosed)
 	{
@@ -58,30 +64,33 @@ int main(int argc, char** argv)
 
 		camera.Update(&input);
 
-		//INPUT TEST END
-
-		//RAYCAST TEST
-
-		/*double t = cube.RayFaceIntersectionTEST(camera.position, camera.forward, glm::vec3(0, 0, -1), cubeVertices);
-		std::cout << t << std::endl;
-		if(t == -1)
-		display.Clear(0.6f, 0.15f, 0.2f, 1.0f);
-		else
-		display.Clear(0.15f, 0.6f, 0.15f, 1.0f);*/
-
-		//RAYCAST TEST END
-
 		shader.Bind();
 
 		shader.Update(transform, camera);
 
+		chunkManager.camPosition = camera.position;
 		chunkManager.Draw(camera.position.x, camera.position.z);
+		
+		display.BindFrameBuffer(display.m_fbo);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		display.DrawBuffer(Display::SOLID);
 
 		waveShader.Bind();
 		waveShader.Update(transform, camera);
-
+		
 		display.DrawBuffer(Display::LIQUID);
+		
+		display.BindFrameBuffer(0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		postShader.Bind();
+
+		glBegin(GL_QUADS);
+		glVertex2f(-1, -1);
+		glVertex2f(1, -1);
+		glVertex2f(1, 1);
+		glVertex2f(-1, 1);
+		glEnd();
 		display.Update();
 		counter += 0.05f;
 	}

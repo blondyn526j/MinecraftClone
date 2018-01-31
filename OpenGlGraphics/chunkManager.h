@@ -41,6 +41,7 @@ public:
 	char* blockIDs;
 
 	glm::vec3 chunkRoot = glm::vec3(0, 0, 0);
+
 private:
 };
 
@@ -56,6 +57,9 @@ public:
 	void Draw(float x, float z);
 
 	char& m_xyzToBlock(float globalX, float globalY, float globalZ);
+	glm::vec3 camPosition = glm::vec3(0, 0, 0);
+	glm::vec3 camForward = glm::vec3(0, 0, 0);
+
 private:
 	//Chunk* m_chunk;
 	void DrawChunk(int ax, int az);

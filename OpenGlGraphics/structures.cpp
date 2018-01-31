@@ -113,6 +113,37 @@ Structures::Structures()
 
 	structures[TREE_C].ids.push_back(Blocks::BLOCK_LEAVES_SNOWY);
 	structures[TREE_C].offsets.push_back(glm::vec3(0, 6, 0));
+
+
+	//TREE2
+
+	structures.push_back(Structure(15));
+
+	structures[TREE2].ids.push_back(Blocks::BLOCK_WOOD1);
+	structures[TREE2].offsets.push_back(glm::vec3(0, 0, 0));
+
+	structures[TREE2].ids.push_back(Blocks::BLOCK_WOOD1);
+	structures[TREE2].offsets.push_back(glm::vec3(0, 1, 0));
+
+	structures[TREE2].ids.push_back(Blocks::BLOCK_WOOD1);
+	structures[TREE2].offsets.push_back(glm::vec3(0, 2, 0));
+
+	structures[TREE2].ids.push_back(Blocks::BLOCK_WOOD1);
+	structures[TREE2].offsets.push_back(glm::vec3(0, 3, 0));
+
+	structures[TREE2].ids.push_back(Blocks::BLOCK_WOOD1);
+	structures[TREE2].offsets.push_back(glm::vec3(0, 4, 0));
+
+	for (int x = -1; x <= 1; ++x)
+		for (int z = -1; z <= 1; ++z)
+		{
+			structures[TREE2].ids.push_back(Blocks::BLOCK_LEAVES0);
+			structures[TREE2].offsets.push_back(glm::vec3(x, 5, z));
+		}
+
+	structures[TREE2].ids.push_back(Blocks::BLOCK_LEAVES0);
+	structures[TREE2].offsets.push_back(glm::vec3(0, 6, 0));
+	//END TREE2
 }
 
 

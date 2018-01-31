@@ -8,6 +8,9 @@
 
 Display::Display(int width, int height, const std::string& title)
 {
+	this->width = width;
+	this->height = height;
+
 	SDL_Init(SDL_INIT_EVERYTHING);
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
@@ -44,6 +47,8 @@ Display::Display(int width, int height, const std::string& title)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	//glEnable(GL_ARB_explicit_uniform_location);
+
 	//glEnable(GL_FOG);
 	//glFogfv(GL_FOG_START, &fogStart);
 	//glFogfv(GL_FOG_START, &fogEnd);
@@ -74,8 +79,6 @@ void Display::ClearBuffer()
 	for (int i = 0; i < NUM_TYPES; i++)
 	{
 		m_bufferedVertices[i] = 0;
-		//positions[i].clear();
-		//texCoords[i].clear();
 	}
 }
 
@@ -136,6 +139,38 @@ void Display::InitializeBuffer()
 		glEnableVertexAttribArray(2);
 		glVertexAttribIPointer(2, 1, GL_INT, GL_FALSE, 0);
 		
+		//Generate FBO
+		glGenFramebuffers(1, &m_fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+		
+		glGenTextures(1, &m_texColor);
+		glBindTexture(GL_TEXTURE_2D, m_texColor);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+		glGenTextures(1, &m_texDepth);
+		glBindTexture(GL_TEXTURE_2D, m_texDepth);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+
+		//glGenRenderbuffers(1, &m_depthBuffer);
+		//glBindRenderbuffer(GL_RENDERBUFFER, m_depthBuffer);
+		//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 800, 600);
+		//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_texDepth);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_texDepth, 0);
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texColor, 0);
+		GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
+		glDrawBuffers(1, DrawBuffers);
+
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+			std::cerr << "Framebuffer Failed!" << std::endl;
 		glBindVertexArray(0);
 	}
 

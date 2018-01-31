@@ -27,7 +27,16 @@ public:
 	void ClearBuffer();
 	void ReassignBuffer();
 
+	void BindFrameBuffer(GLuint num)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, num);
+	}
+
 	virtual ~Display();
+	GLuint m_texColor, m_texDepth;
+	GLuint m_depthBuffer;
+	GLuint m_fbo;
+
 protected:
 private:
 	SDL_Window* m_window;
@@ -51,7 +60,10 @@ private:
 	int m_drawnVertices[NUM_TYPES] = { 0, 0 };
 	GLuint m_vertexArrayObject[NUM_TYPES];
 	GLuint m_vertexArrayBuffers[NUM_TYPES][NUM_BUFFERS];
+	
+	//float m_texColorData[800][600];
 
 	GLfloat fogStart = 10.0f;
 	GLfloat fogEnd = 15.0f;
+	int width = 800, height = 600;
 };
