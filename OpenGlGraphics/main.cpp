@@ -72,6 +72,7 @@ int main(int argc, char** argv)
 		chunkManager.Draw(camera.position.x, camera.position.z);
 		
 		display.BindFrameBuffer(display.m_fbo);
+		//glViewport(0, 0, width/2, height/2);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		display.DrawBuffer(Display::SOLID);
@@ -82,15 +83,14 @@ int main(int argc, char** argv)
 		display.DrawBuffer(Display::LIQUID);
 		
 		display.BindFrameBuffer(0);
+		//glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		postShader.Bind();
 
-		glBegin(GL_QUADS);
-		glVertex2f(-1, -1);
-		glVertex2f(1, -1);
-		glVertex2f(1, 1);
-		glVertex2f(-1, 1);
-		glEnd();
+		glBindVertexArray(display.m_rectangleVAO);
+		glDrawArrays(GL_QUADS, 0, 4);
+		glBindVertexArray(0);
+
 		display.Update();
 		counter += 0.05f;
 	}

@@ -33,9 +33,10 @@ public:
 	}
 
 	virtual ~Display();
-	GLuint m_texColor, m_texDepth;
+	GLuint m_texColor, m_texDepth, m_texSSAO;
 	GLuint m_depthBuffer;
 	GLuint m_fbo;
+	GLuint m_rectangleVAO;
 
 protected:
 private:

@@ -39,7 +39,6 @@ void main()
 	//vec4 tex = vec4((sin(position0.x/3 + timer0*2) + 1)/2, (sin(position0.y/3 + timer0*2.5) + 1)/2, (sin(position0.z/3 + camPosition0.z) + 1)/2, 1);
 	vec4 tex = texture2D(diffuseMap, texCoord0);
 	//vec4 fogColor = vec4(0.7, 0.9, 0.98, 1.0);
-
 	//float f = 1.0 - 1.0/pow(0.5*length(camPosition0-position0), 0.2);
 	float f = 1-(200 - length(camPosition0-position0))/(20.0);
 	f = clamp(f, 0, 1);
