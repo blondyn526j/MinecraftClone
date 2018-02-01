@@ -114,10 +114,16 @@
     <None Include="res\waveShader.vs">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="res\postShader.fs">
+    <None Include="res\ssaoShader.fs">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="res\postShader.vs">
+    <None Include="res\ssaoShader.vs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\blurShader.fs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\blurShader.vs">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

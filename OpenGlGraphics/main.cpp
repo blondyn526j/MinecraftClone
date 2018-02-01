@@ -30,7 +30,8 @@ Camera camera(glm::vec3(8.0f, 100.0, 8.0f), 80.0f, (float)width / (float)height,
 
 Shader shader("./res/basicShader");
 Shader waveShader("./res/waveShader");
-Shader postShader("./res/postShader");
+Shader ssaoShader("./res/ssaoShader");
+Shader blurShader("./res/blurShader");
 
 Texture texture("./res/Texture.png");
 Texture normalTexture("./res/NormalMap.png");
@@ -56,10 +57,11 @@ int main(int argc, char** argv)
 	glBindTexture(GL_TEXTURE_2D, display.m_texColor);
 	glActiveTexture(GL_TEXTURE0 + 3);
 	glBindTexture(GL_TEXTURE_2D, display.m_texDepth);
+	glActiveTexture(GL_TEXTURE0 + 4);
+	glBindTexture(GL_TEXTURE_2D, display.m_texSSAO);
 
 	while (!isClosed)
 	{
-		//INPUT TEST
 		input.Update();
 
 		camera.Update(&input);
@@ -71,7 +73,7 @@ int main(int argc, char** argv)
 		chunkManager.camPosition = camera.position;
 		chunkManager.Draw(camera.position.x, camera.position.z);
 		
-		display.BindFrameBuffer(display.m_fbo);
+		display.BindFrameBuffer(display.m_fboRender);
 		//glViewport(0, 0, width/2, height/2);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -82,14 +84,19 @@ int main(int argc, char** argv)
 		
 		display.DrawBuffer(Display::LIQUID);
 		
-		display.BindFrameBuffer(0);
+		display.BindFrameBuffer(display.m_fboSSAO);
 		//glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		postShader.Bind();
+		ssaoShader.Bind();
 
 		glBindVertexArray(display.m_rectangleVAO);
 		glDrawArrays(GL_QUADS, 0, 4);
-		glBindVertexArray(0);
+		//glBindVertexArray(0);
+
+		display.BindFrameBuffer(0);
+		blurShader.Bind();
+		glDrawArrays(GL_QUADS, 0, 4);
+
 
 		display.Update();
 		counter += 0.05f;

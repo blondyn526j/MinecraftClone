@@ -33,6 +33,7 @@ Shader::Shader(const std::string fileName)
 	GLuint m_normalTexLoc = glGetUniformLocation(m_program, "normalMap");
 	GLuint m_renderTexLoc = glGetUniformLocation(m_program, "renderMap");
 	GLuint m_depthTexLoc = glGetUniformLocation(m_program, "depthMap");
+	GLuint m_ssaoTexLoc = glGetUniformLocation(m_program, "ssaoMap");
 
 	if (m_diffuseTexLoc == -1)
 		std::cout << "Diffuse Tex Location Not Found!" << fileName << std::endl;
@@ -49,6 +50,7 @@ Shader::Shader(const std::string fileName)
 	glUniform1i(m_normalTexLoc, 1);
 	glUniform1i(m_renderTexLoc, 2);
 	glUniform1i(m_depthTexLoc, 3);
+	glUniform1i(m_ssaoTexLoc, 4);
 }
 
 Shader::~Shader()

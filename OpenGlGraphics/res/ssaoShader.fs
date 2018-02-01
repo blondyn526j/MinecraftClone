@@ -1,6 +1,4 @@
 #version 330
-#extension GL_ARB_explicit_uniform_location : require
-
 
 out vec4 color;
 in vec2 position0;
@@ -8,7 +6,7 @@ uniform sampler2D renderMap;
 uniform sampler2D normalMap;
 uniform sampler2D depthMap;
 
-float range = 0.01;
+float range = 0.05;
 
 	vec3 sampleSphere[16]=
 	vec3[16](
@@ -69,15 +67,15 @@ vec3 GetNormal(float depth)
 
 float testSSAO()
 {
-	float strength = 0.6;
+	float strength = 0.9;
 	float base = 0.05;
 
 	float area = 0.95;
-	float falloff = 0.000001;
+	float falloff = 0.001;
 	float radius = 0.02;
 	int samples = 16;
 
-	vec3 random = normalize(texture2D(normalMap, 4.0*position0).rgb);
+	vec3 random = normalize(texture2D(normalMap, 4.1*position0).rgb);
 	float depth = LinearDepth(texture2D(depthMap, position0).r);
 	vec3 position = vec3(position0.xy, depth);
 	vec3 normal = GetNormal(depth);
@@ -101,6 +99,10 @@ float testSSAO()
 
 void main() 
 {
+	//if(texture2D(depthMap, position0.xy).r >= 1.0)
+	//	color = 1.0;
+	//else
+	//	color = mix(1.0, 0.0, testSSAO());
 
 	//float ssaoComponent = 0;
 	//float ssaoRange = 0.01;
@@ -113,10 +115,12 @@ void main()
 	//	ssaoComponent += GetSSAOComponent(offsetVector, currentDepth);
 	//}
 	//ssaoComponent *= 8.0;
+	
 	if(texture2D(depthMap, position0.xy).r >= 1.0)
-	color = texture2D(renderMap, position0.xy);
+	color = vec4(1, 1, 1, 1);
 	else
-	color = mix(texture2D(renderMap, position0.xy), vec4(0, 0, 0, 1), testSSAO());
+	color = mix(vec4(1, 1, 1, 1), vec4(0, 0, 0, 1), testSSAO());
 	//color = vec4(LinearDepth(texture2D(depthMap, position0.xy).r), 0, 0, 1);
+	
 	//color = testSSAO();texture2D(renderMap, position0.xy)
 }
