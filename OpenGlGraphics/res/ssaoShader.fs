@@ -67,12 +67,12 @@ vec3 GetNormal(float depth)
 
 float testSSAO()
 {
-	float strength = 0.9;
+	float strength = 0.6;
 	float base = 0.05;
 
-	float area = 0.95;
-	float falloff = 0.001;
-	float radius = 0.02;
+	float area = 0.45;
+	float falloff = 0.00015;
+	float radius = 0.01;
 	int samples = 16;
 
 	vec3 random = normalize(texture2D(normalMap, 4.1*position0).rgb);
