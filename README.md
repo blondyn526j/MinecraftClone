@@ -5,11 +5,11 @@ This is my fist project using OpenGl
 I did many, many things incorrectly, but I don't really want to rewrite it.
 Everything was done for educational purposes only.
 
-![Screenshot1](https://imgur.com/z1ByWya)
+![Screenshot1](https://imgur.com/z1ByWya.png)
 
-![Screenshot2](https://imgur.com/mg8pcbo)
+![Screenshot2](https://imgur.com/mg8pcbo.png)
 
-![Screenshot3](https://imgur.com/7aAbTB9)
+![Screenshot3](https://imgur.com/7aAbTB9.png)
 
 Also I'm using library FastNoise which you can find here:
 https://github.com/Auburns/FastNoise
